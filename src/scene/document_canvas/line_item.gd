@@ -35,6 +35,7 @@ var type : int = PName.LineType.Normal
 var line_y_point : int 
 var id : int
 
+var indent: int = 0
 var font : Font
 var alignment : int
 var font_size : int
@@ -67,6 +68,10 @@ func _init(text: String, params: Dictionary = {}):
 static func reset_incr_id():
 	_incr_id = 0
 
+
+func handle_by_path(file_path: String):
+	if file_path.get_extension().to_lower() in ["md", "txt"]:
+		handle_md()
 
 ## 处理 md 文件内容
 func handle_md():
@@ -116,15 +121,15 @@ func get_font_height() -> float:
 func get_sub_line(point: Vector2, width: float) -> int:
 	return ceili( (point.y - line_y_point) / get_font_height() )
 
+
 ## 绘制到这个节点上
 func draw_to(canvas: CanvasItem, margin: Rect2, width: float):
-	# 绘制内容
 	canvas.draw_multiline_string(
 		font, 
-		Vector2(margin.position.x, line_y_point + get_font_height() - 4), 
+		Vector2(margin.position.x + indent, line_y_point + get_font_height() - 4), 
 		text, 
 		alignment, 
-		width, 
+		width - indent, 
 		font_size, 
 		-1,
 		font_color, 

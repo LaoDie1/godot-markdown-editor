@@ -10,7 +10,7 @@ class_name PName
 
 
 enum LineType {
-	Normal, ## 普通行
+	Normal = 0, ## 普通行
 	
 	Colon = 10001, ## 冒号
 	SerialNumber, ## 序号
@@ -25,7 +25,7 @@ enum LineType {
 }
 
 
-
 ## 数据分隔
 const DATA_SPLIT_CHAR = char(0xfffff)
+
 

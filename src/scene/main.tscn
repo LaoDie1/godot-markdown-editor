@@ -25,7 +25,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_al0ie")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="HSplitContainer" type="HSplitContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -33,7 +33,16 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Menu" type="MenuBar" parent="VBoxContainer"]
+[node name="Left" type="MarginContainer" parent="HSplitContainer"]
+layout_mode = 2
+
+[node name="ItemList" type="ItemList" parent="HSplitContainer/Left"]
+layout_mode = 2
+
+[node name="Right" type="VBoxContainer" parent="HSplitContainer"]
+layout_mode = 2
+
+[node name="Menu" type="MenuBar" parent="HSplitContainer/Right"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
@@ -43,11 +52,11 @@ theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
 flat = true
 script = ExtResource("1_s2vjw")
 
-[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="HSplitContainer/Right"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/ScrollContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="HSplitContainer/Right/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -55,13 +64,12 @@ theme_override_constants/margin_left = 4
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 8
 
-[node name="DocumentCanvas" parent="VBoxContainer/ScrollContainer/MarginContainer" instance=ExtResource("2_850oq")]
+[node name="DocumentCanvas" parent="HSplitContainer/Right/ScrollContainer/MarginContainer" instance=ExtResource("2_850oq")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="DebugEditor" type="TextEdit" parent="VBoxContainer"]
+[node name="DebugEditor" type="TextEdit" parent="HSplitContainer/Right"]
 unique_name_in_owner = true
-visible = false
 custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 editable = false
@@ -71,11 +79,13 @@ autowrap_mode = 1
 [node name="OpenFileDialog" type="FileDialog" parent="."]
 unique_name_in_owner = true
 title = "Open a File"
+size = Vector2i(345, 159)
 ok_button_text = "打开"
 file_mode = 0
 access = 2
-filters = PackedStringArray("*.md;Markdown File")
+filters = PackedStringArray("*.md;Markdown File", "*.txt;Text File")
 
-[connection signal="menu_pressed" from="VBoxContainer/Menu" to="." method="_on_menu_menu_pressed"]
-[connection signal="selected" from="VBoxContainer/ScrollContainer/MarginContainer/DocumentCanvas" to="." method="_on_document_canvas_selected"]
+[connection signal="menu_pressed" from="HSplitContainer/Right/Menu" to="." method="_on_menu_menu_pressed"]
+[connection signal="selected" from="HSplitContainer/Right/ScrollContainer/MarginContainer/DocumentCanvas" to="." method="_on_document_canvas_selected"]
 [connection signal="file_selected" from="OpenFileDialog" to="." method="_on_open_file_dialog_file_selected"]
+[connection signal="visibility_changed" from="OpenFileDialog" to="." method="_on_open_file_dialog_visibility_changed"]

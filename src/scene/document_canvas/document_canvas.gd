@@ -17,7 +17,6 @@ signal selected(line_item: LineItem)
 
 
 var file_path : String = ""
-var origin_lines : Array = []
 var line_offset_point : float = 0
 var line_items : Array[LineItem] = []
 var p_to_item : Dictionary = {} # 点击的位置对应的行字符串
@@ -26,7 +25,10 @@ var _selected_pos : Vector2 = Vector2()
 var _selected_line_item : LineItem = null:
 	set(v):
 		_selected_line_item = v
-		_selected_line_idx = line_items.find(_selected_line_item)
+		if _selected_line_item == null	:
+			_selected_line_idx = -1
+		else:
+			_selected_line_idx = line_items.find(_selected_line_item)
 var _selected_line_idx : int = -1
 
 
@@ -72,9 +74,9 @@ func _gui_input(event):
 		# 查找并处理这个位置上的 item
 		_selected_pos = get_local_mouse_position()
 		await Engine.get_main_loop().process_frame
-		for idx in line_items.size() - 1:
-			var item : LineItem = line_items[idx]
-			var next_item : LineItem = line_items[idx + 1]
+		for line_idx in line_items.size() - 1:
+			var item : LineItem = line_items[line_idx]
+			var next_item : LineItem = line_items[line_idx + 1]
 			if _selected_pos.y >= item.line_y_point and _selected_pos.y < next_item.line_y_point:
 				_selected_line_item = item
 				_select_line(_selected_line_item)
@@ -85,6 +87,14 @@ func _gui_input(event):
 #============================================================
 #  自定义
 #============================================================
+func get_as_string() -> String:
+	var text = ""
+	for line_item in line_items:
+		text += line_item.origin_text
+		text += "\n"
+	return text
+
+
 func get_width() -> float:
 	return size.x - margin.position.x - margin.size.x
 
@@ -98,12 +108,12 @@ func _line_point_offset(item: LineItem, width: float):
 func open_file(path: String) -> void:
 	LineItem.reset_incr_id()
 	file_path = path
-	origin_lines = FileUtil.read_as_lines(path)
 	line_items.clear()
 	
 	# 处理每行
+	var origin_lines = FileUtil.read_as_lines(path)
 	match file_path.get_extension().to_lower():
-		"md":
+		"md", "txt":
 			for line in origin_lines:
 				var item = LineItem.new(line)
 				item.handle_md()
@@ -155,18 +165,34 @@ func _select_line(item: LineItem):
 	text_edit.set_caret_column(v.x)
 	
 	self.selected.emit(item)
-	
 
 
 # 插入行
-func _insert_line(idx: int) -> LineItem:
+func _insert_line(line_idx: int) -> LineItem:
 	var new_line_item = LineItem.new("")
-	var last_item = line_items[idx]
+	var last_item = line_items[line_idx]
 	new_line_item.line_y_point = last_item.line_y_point
-	line_items.insert(idx, new_line_item)
-	origin_lines.insert(idx, new_line_item.text)
+	line_items.insert(line_idx, new_line_item)
 	return new_line_item
 
+# 删除行
+func _delete_line(line_idx:  int) -> void:
+	if line_idx > 0:
+		var line_item : LineItem = line_items[line_idx]
+		line_items.remove_at(line_idx)
+		
+		# 将内容追加到上一行
+		if line_item.text != "":
+			var last_line_item = line_items[line_idx - 1]
+			var last_caret_column = last_line_item.text.length()
+			last_line_item.origin_text += line_item.text
+			last_line_item.handle_md()
+			Engine.get_main_loop().create_timer(0.01).timeout.connect(
+				text_edit.set_caret_column.bind(last_caret_column),
+				Object.CONNECT_ONE_SHOT
+			)
+		
+		_update_line_after_pos(line_idx, -line_item.get_total_height(get_width()))
 
 # 更新这个行的内容
 func _update_line_by_text_edit(line_item: LineItem, hide_text_edit: bool):
@@ -174,8 +200,7 @@ func _update_line_by_text_edit(line_item: LineItem, hide_text_edit: bool):
 		var last_height = line_item.get_total_height(get_width())
 		# 设置内容
 		line_item.origin_text = text_edit.text
-		if file_path.get_extension().to_lower() == "md":
-			line_item.handle_md()
+		line_item.handle_by_path(file_path)
 		var height = line_item.get_total_height(get_width())
 		if last_height != height:
 			_update_line_after_pos( _selected_line_idx, height - last_height)
@@ -186,11 +211,10 @@ func _update_line_by_text_edit(line_item: LineItem, hide_text_edit: bool):
 
 # 更新这个索引的行之后的位置偏移 
 func _update_line_after_pos(item_idx: int, offset: float):
-	if item_idx == -1 or offset == 0:
+	if item_idx == -1 or offset <= 2:
 		return
 	for i in range(item_idx + 1, line_items.size()):
 		line_items[i].line_y_point += offset
-	print_debug(range(item_idx + 1, line_items.size()), offset)
 	queue_redraw()
 
 
@@ -224,6 +248,20 @@ func _on_text_edit_gui_input(event):
 				await Engine.get_main_loop().process_frame
 				_selected_line_item = new_line_item
 				_select_line(new_line_item)
+		
+		elif InputUtil.is_key(event, KEY_BACKSPACE):
+			if text_edit.get_caret_column()==0 and text_edit.get_caret_line() == 0:
+				var selected_line_idx = _selected_line_idx
+				if selected_line_idx > 0:
+					_delete_line(_selected_line_idx)
+					get_tree().root.set_input_as_handled()
+					queue_redraw()
+					
+					await Engine.get_main_loop().process_frame
+					await Engine.get_main_loop().process_frame
+					_selected_line_item = line_items[selected_line_idx - 1]
+					_select_line(_selected_line_item)
+					
 
 
 func _on_text_edit_resized():
