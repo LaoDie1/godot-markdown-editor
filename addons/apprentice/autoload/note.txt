@@ -1,0 +1,4 @@
+If added here, the script inside will be automatically added as a global script when the plugin is opened. 
+so do not add a class name to the script here
+
+若在这里添加，则在开启插件时，自动添加里面的脚本为全局脚本。所以不要在这里的脚本加类名

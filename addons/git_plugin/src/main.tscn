@@ -1,0 +1,35 @@
+[gd_scene load_steps=4 format=3 uid="uid://b84ncy7wplrnp"]
+
+[ext_resource type="Script" path="res://addons/git_plugin/src/main.gd" id="1_g7vdx"]
+[ext_resource type="PackedScene" uid="uid://b6m25ar08vbba" path="res://addons/git_plugin/src/panel/commit_panel/commit_panel.tscn" id="2_hklok"]
+[ext_resource type="PackedScene" uid="uid://b0mo6ij8gieuf" path="res://addons/git_plugin/src/panel/init_panel/init_panel.tscn" id="3_tn6tc"]
+
+[node name="Git" type="Control"]
+clip_contents = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_g7vdx")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CommitPanel" parent="." instance=ExtResource("2_hklok")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="InitPanel" parent="." instance=ExtResource("3_tn6tc")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[connection signal="visibility_changed" from="InitPanel" to="." method="_on_init_panel_visibility_changed"]

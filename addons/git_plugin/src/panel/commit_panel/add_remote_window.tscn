@@ -1,0 +1,54 @@
+[gd_scene load_steps=2 format=3 uid="uid://cnkco11citjna"]
+
+[ext_resource type="Script" path="res://addons/git_plugin/src/panel/commit_panel/add_remote_window.gd" id="1_8rgr3"]
+
+[node name="AddRemoteWindow" type="ConfirmationDialog"]
+title = "Add Remote Url..."
+position = Vector2i(40, 60)
+size = Vector2i(550, 240)
+visible = true
+unresizable = true
+script = ExtResource("1_8rgr3")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -49.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 48
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 48
+theme_override_constants/margin_bottom = 32
+
+[node name="GridContainer" type="GridContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/h_separation = 32
+theme_override_constants/v_separation = 32
+columns = 2
+
+[node name="Label" type="Label" parent="MarginContainer/GridContainer"]
+layout_mode = 2
+text = "Name:"
+
+[node name="RemoteNameLineEdit" type="LineEdit" parent="MarginContainer/GridContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "example: origin"
+
+[node name="Label2" type="Label" parent="MarginContainer/GridContainer"]
+layout_mode = 2
+text = "URL:"
+
+[node name="RemoteUrlLineEdit" type="LineEdit" parent="MarginContainer/GridContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "example: https://github.com/user/example"
+
+[connection signal="confirmed" from="." to="." method="_on_confirmed"]

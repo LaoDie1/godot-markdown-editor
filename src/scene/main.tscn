@@ -1,0 +1,55 @@
+[gd_scene load_steps=5 format=3 uid="uid://bt76gbf20dwl"]
+
+[ext_resource type="Script" path="res://src/scene/main.gd" id="1_5283d"]
+[ext_resource type="Script" path="res://addons/simplemenu/simple_menu.gd" id="1_s2vjw"]
+[ext_resource type="PackedScene" uid="uid://bi6uhrh1qr7e5" path="res://src/scene/document_canvas/document_canvas.tscn" id="2_850oq"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_al0ie"]
+bg_color = Color(1, 0.991272, 0.898438, 1)
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_5283d")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_al0ie")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SimpleMenu" type="MenuBar" parent="VBoxContainer"]
+layout_mode = 2
+script = ExtResource("1_s2vjw")
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 8
+
+[node name="DocumentCanvas" parent="VBoxContainer/MarginContainer" instance=ExtResource("2_850oq")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ReferenceRect" type="ReferenceRect" parent="VBoxContainer/MarginContainer"]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+editor_only = false

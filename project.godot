@@ -1,0 +1,32 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="simple-note"
+run/main_scene="res://src/scene/main.tscn"
+config/features=PackedStringArray("4.3", "Forward Plus")
+run/low_processor_mode=true
+config/icon="res://icon.svg"
+
+[autoload]
+
+AutoLoadConfig="*res://addons/apprentice/config/auto_load_config.gd"
+TimeBus="*res://addons/apprentice/autoload/time_bus.gd"
+Config="*res://src/script/config.gd"
+
+[display]
+
+window/size/viewport_width=1000
+window/size/viewport_height=1000
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/ColorPreview/plugin.cfg", "res://addons/apprentice/plugin.cfg", "res://addons/git_plugin/plugin.cfg", "res://addons/script_comment_menu/plugin.cfg", "res://addons/simplemenu/plugin.cfg")

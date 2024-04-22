@@ -1,0 +1,36 @@
+[gd_scene load_steps=2 format=3 uid="uid://b0pfmy3j7eoqx"]
+
+[ext_resource type="Script" path="res://addons/apprentice/refcount/message_queue_test/scene.gd" id="1_hodxv"]
+
+[node name="scene" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 54.0
+offset_bottom = 60.0
+script = ExtResource("1_hodxv")
+
+[node name="message_box" type="TextEdit" parent="."]
+layout_mode = 0
+offset_left = 213.0
+offset_top = 76.0
+offset_right = 500.0
+offset_bottom = 188.0
+
+[node name="send" type="Button" parent="."]
+layout_mode = 0
+offset_left = 262.0
+offset_top = 232.0
+offset_right = 445.0
+offset_bottom = 302.0
+text = "Send"
+
+[node name="content" type="TextEdit" parent="."]
+layout_mode = 0
+offset_left = 134.0
+offset_top = 388.0
+offset_right = 584.0
+offset_bottom = 539.0
+text = "content:"
+editable = false
+
+[connection signal="pressed" from="send" to="." method="_on_send_pressed"]
