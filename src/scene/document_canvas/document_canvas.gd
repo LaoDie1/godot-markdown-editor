@@ -23,7 +23,11 @@ var line_items : Array[LineItem] = []
 var p_to_item : Dictionary = {} # 点击的位置对应的行字符串
 
 var _selected_pos : Vector2 = Vector2()
-var _selected_line_item : LineItem = null
+var _selected_line_item : LineItem = null:
+	set(v):
+		_selected_line_item = v
+		_selected_line_idx = line_items.find(_selected_line_item)
+var _selected_line_idx : int = -1
 
 
 #============================================================
@@ -92,7 +96,7 @@ func _line_point_offset(item: LineItem, width: float):
 
 ## 打开绘制的文件
 func open_file(path: String) -> void:
-	LineItem.reset_line()
+	LineItem.reset_incr_id()
 	file_path = path
 	origin_lines = FileUtil.read_as_lines(path)
 	line_items.clear()
@@ -118,6 +122,9 @@ func _draw_lines():
 	var width = get_width()
 	for item in line_items:
 		draw_line_item(item, width)
+	
+	custom_minimum_size.y = line_offset_point
+	size.y = line_offset_point
 
 
 ## 绘制这个行
@@ -135,10 +142,10 @@ func draw_line_item(item: LineItem, width : float):
 # 选中行
 func _select_line(item: LineItem):
 	text_edit.visible = true
-	text_edit.size = Vector2(get_width() + 18, 0)
+	text_edit.custom_minimum_size = Vector2(get_width() + 18, 0)
 	text_edit.text = item.origin_text.substr(0, item.origin_text.length())
-	text_edit.size.y = item.get_total_height(get_width())
-	text_edit.position = Vector2(0, item.line_y_point)
+	text_edit.custom_minimum_size.y = item.get_total_height(get_width())
+	text_edit.get_parent_control().position = Vector2(0, item.line_y_point)
 	
 	text_edit.add_theme_font_size_override("font_size", item.font_size)
 	text_edit.add_theme_font_override("font", item.font)
@@ -162,7 +169,7 @@ func _insert_line(idx: int) -> LineItem:
 
 
 # 更新这个行的内容
-func _update_line_by_text_edit(line_item: LineItem):
+func _update_line_by_text_edit(line_item: LineItem, hide_text_edit: bool):
 	if line_item.origin_text != text_edit.text:
 		var last_height = line_item.get_total_height(get_width())
 		# 设置内容
@@ -171,16 +178,19 @@ func _update_line_by_text_edit(line_item: LineItem):
 			line_item.handle_md()
 		var height = line_item.get_total_height(get_width())
 		if last_height != height:
-			_update_line_after_pos( line_items.find(line_item), height - last_height)
+			_update_line_after_pos( _selected_line_idx, height - last_height)
 		queue_redraw()
 	
-	text_edit.visible = false
+	text_edit.visible = not hide_text_edit
 
 
 # 更新这个索引的行之后的位置偏移 
 func _update_line_after_pos(item_idx: int, offset: float):
+	if item_idx == -1 or offset == 0:
+		return
 	for i in range(item_idx + 1, line_items.size()):
 		line_items[i].line_y_point += offset
+	print_debug(range(item_idx + 1, line_items.size()), offset)
 	queue_redraw()
 
 
@@ -191,19 +201,19 @@ func _update_line_after_pos(item_idx: int, offset: float):
 func _on_text_edit_visibility_changed():
 	if text_edit and not text_edit.visible:
 		if _selected_line_item:
-			_update_line_by_text_edit(_selected_line_item)
+			_update_line_by_text_edit(_selected_line_item, true)
 
 
 func _on_text_edit_gui_input(event):
 	if event is InputEventKey:
 		if InputUtil.is_key(event, KEY_ENTER):
-			_update_line_by_text_edit(_selected_line_item)
+			_update_line_by_text_edit(_selected_line_item, true)
 			get_tree().root.set_input_as_handled()
 			text_edit.visible = false
 			
 			if not Input.is_key_pressed(KEY_CTRL) and _selected_line_item:
 				# 插入新的行
-				var new_idx : int = line_items.find(_selected_line_item) + 1
+				var new_idx : int = _selected_line_idx + 1
 				var new_line_item : LineItem = _insert_line(new_idx)
 				
 				# 更新后面行的偏移
@@ -217,4 +227,11 @@ func _on_text_edit_gui_input(event):
 
 
 func _on_text_edit_resized():
-	pass # Replace with function body.
+	if _selected_line_item and text_edit.visible:
+		await Engine.get_main_loop().process_frame
+		var height = _selected_line_item.get_total_height_by_text(text_edit.text, get_width())
+		var last_height = _selected_line_item.get_total_height(get_width())
+		_selected_line_item.line_y_point += height - last_height
+		_update_line_by_text_edit(_selected_line_item, false)
+		_update_line_after_pos( _selected_line_idx, height - last_height)
+

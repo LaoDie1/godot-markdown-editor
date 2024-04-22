@@ -56,13 +56,18 @@ grow_vertical = 2
 theme = SubResource("Theme_5syx7")
 script = ExtResource("1_q8bgb")
 
-[node name="TextEdit" type="TextEdit" parent="."]
-unique_name_in_owner = true
+[node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 0
-offset_left = -174.0
-offset_top = 44.0
-offset_right = -49.0
-offset_bottom = 135.0
+offset_left = -327.0
+offset_top = 111.0
+offset_right = -120.0
+offset_bottom = 230.0
+
+[node name="TextEdit" type="TextEdit" parent="MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
 theme = SubResource("Theme_86keu")
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_constants/line_spacing = 0
@@ -83,6 +88,6 @@ grow_vertical = 2
 mouse_filter = 2
 editor_only = false
 
-[connection signal="gui_input" from="TextEdit" to="." method="_on_text_edit_gui_input"]
-[connection signal="resized" from="TextEdit" to="." method="_on_text_edit_resized"]
-[connection signal="visibility_changed" from="TextEdit" to="." method="_on_text_edit_visibility_changed"]
+[connection signal="gui_input" from="MarginContainer/TextEdit" to="." method="_on_text_edit_gui_input"]
+[connection signal="resized" from="MarginContainer/TextEdit" to="." method="_on_text_edit_resized"]
+[connection signal="visibility_changed" from="MarginContainer/TextEdit" to="." method="_on_text_edit_visibility_changed"]

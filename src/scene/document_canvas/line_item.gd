@@ -18,10 +18,10 @@ const MD_TYPE_STRING_DICT = {
 	">": PName.LineType.Quote,
 }
 
-static var _incr_line : int = 0: # 自增行。每次创建一个当前类的对象，则会自增1
+static var _incr_id : int = 0: # 自增行。每次创建一个当前类的对象，则会自增1
 	get:
-		_incr_line += 1
-		return _incr_line
+		_incr_id += 1
+		return _incr_id
 
 
 ## 原始字符串
@@ -33,8 +33,7 @@ var type : int = PName.LineType.Normal
 
 ## 画布所在的 y 轴点
 var line_y_point : int 
-## 所在行
-var line : int
+var id : int
 
 var font : Font
 var alignment : int
@@ -46,7 +45,7 @@ var font_color : Color
 #  Standard
 #============================================================
 func _init(text: String, params: Dictionary = {}):
-	line = _incr_line
+	id = _incr_id
 	
 	self.origin_text = text
 	self.text = text + "\n"
@@ -65,8 +64,8 @@ func _init(text: String, params: Dictionary = {}):
 #============================================================
 #  Custom
 #============================================================
-static func reset_line():
-	_incr_line = 0
+static func reset_incr_id():
+	_incr_id = 0
 
 
 ## 处理 md 文件内容
@@ -98,9 +97,14 @@ func handle_md():
 
 ## 获取当前字符串总高度（包括换行高度）
 func get_total_height(width : int) -> float:
-	if text.strip_edges() == "":
+	return get_total_height_by_text(text, width)
+
+
+func get_total_height_by_text(t: String, width: float) -> float:
+	if t.strip_edges() == "":
 		return get_font_height()
-	return font.get_multiline_string_size(text, alignment, width, font_size, -1, TextServer.BREAK_GRAPHEME_BOUND).y + Config.line_spacing
+	return font.get_multiline_string_size(t, alignment, width, font_size, -1, TextServer.BREAK_GRAPHEME_BOUND).y + Config.line_spacing
+
 
 
 ## 一行的字体的高度

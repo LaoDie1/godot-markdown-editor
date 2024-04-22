@@ -8,11 +8,13 @@
 extends Control
 
 
+@onready var menu = %Menu
 @onready var document_canvas = %DocumentCanvas
 @onready var debug_editor = %DebugEditor
+@onready var open_file_dialog = %OpenFileDialog
 
 const CONTENT = """
-LINE: {line}
+ID: {id}
 FONT_HEIGHT: {font_height}
 TYPE: {type}
 FONT_SIZE: {font_size}
@@ -24,7 +26,13 @@ TEXT: {origin_text}
 #  内置
 #============================================================
 func _ready():
-	document_canvas.open_file(r"C:\Users\z\Desktop\test.md")
+	menu.init_menu({
+		"File": ["Open"]
+	})
+	
+	menu.init_shortcut({
+		"/File/Open": SimpleMenu.parse_shortcut("Ctrl+O"),
+	})
 
 
 func _process(delta):
@@ -42,3 +50,13 @@ func _on_document_canvas_selected(line_item: LineItem):
 	data["font_height"] = line_item.get_total_height(document_canvas.get_width())
 	debug_editor.text = CONTENT.format( data ).strip_edges()
 
+
+
+func _on_menu_menu_pressed(idx, menu_path):
+	match menu_path:
+		"/File/Open":
+			open_file_dialog.popup_centered_ratio(0.75)
+
+
+func _on_open_file_dialog_file_selected(path):
+	document_canvas.open_file(path)
