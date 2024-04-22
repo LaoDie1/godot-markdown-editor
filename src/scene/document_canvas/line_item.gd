@@ -16,6 +16,7 @@ const MD_TYPE_STRING_DICT = {
 	"-": PName.LineType.Colon,
 	"*": PName.LineType.Colon,
 	">": PName.LineType.Quote,
+	"---": PName.LineType.SeparationLine,
 }
 
 static var _incr_id : int = 0: # 自增行。每次创建一个当前类的对象，则会自增1
@@ -81,17 +82,20 @@ func handle_by_path(file_path: String):
 ## 处理 md 文件内容
 func handle_md():
 	var tmp = origin_text.strip_edges(true, false)
-	var idx = tmp.find(" ")
 	text = origin_text
 	type = PName.LineType.Normal
+	line_margin = Margin.new()
 	
-	var type_string : String
-	if idx > -1:
-		type_string = origin_text.substr(0, idx)
-	if MD_TYPE_STRING_DICT.has(type_string):
-		type = MD_TYPE_STRING_DICT[type_string]
-		text = origin_text.substr(idx + 1)
-	line_margin.left = 0
+	if origin_text.strip_edges().begins_with("---"):
+		self.type = PName.LineType.SeparationLine
+	else:
+		var idx = tmp.find(" ")
+		var type_string : String
+		if idx > -1:
+			type_string = origin_text.substr(0, idx)
+		if MD_TYPE_STRING_DICT.has(type_string):
+			type = MD_TYPE_STRING_DICT[type_string]
+			text = origin_text.substr(idx + 1)
 	
 	match type:
 		PName.LineType.Normal:
@@ -140,7 +144,11 @@ func draw_to(canvas: CanvasItem, margin: Margin, width: float):
 			var height = get_total_height(width)
 			canvas.draw_rect(Rect2(p + Vector2(8, 0), Vector2(width - 8, height)), Color(0.498039, 1, 0, 0.3), true)
 			canvas.draw_rect(Rect2(p, Vector2(8, height)), Color.CHARTREUSE, true)
-	
+		
+		PName.LineType.SeparationLine:
+			canvas.draw_line( Vector2(0, pos.y - 4), Vector2(width, pos.y - 4), Color(0,0,0,0.15), 1)
+			return
+		
 	pos.y -= line_margin.bottom
 	
 	canvas.draw_multiline_string(

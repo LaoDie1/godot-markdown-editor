@@ -17,6 +17,7 @@ enum LineType {
 	Checkbox, ## 复选框
 	Quote, ## 引用
 	Tag, ## 标签
+	SeparationLine, ## 分隔线
 	
 	Tile_Larger = 20001, ## 大标题
 	Tile_Medium, ## 中等标题

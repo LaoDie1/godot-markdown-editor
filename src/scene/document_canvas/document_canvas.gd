@@ -63,7 +63,6 @@ func _draw():
 	line_offset_point += top_item_left.get_total_height( -1 ) + 2
 	
 	# 顶部分割线
-	_draw_separation_line(1, Config.accent_color)
 	_draw_separation_line(line_offset_point, Config.accent_color)
 	line_offset_point += 3
 	_draw_separation_line(line_offset_point, Config.accent_color)
@@ -166,7 +165,7 @@ func draw_line_item(item: LineItem, width : float):
 func _edit_line(item: LineItem):
 	text_edit.visible = true
 	text_edit.custom_minimum_size.x = get_width() + 2
-	text_edit.custom_minimum_size.y = item.get_total_height(get_width())
+	text_edit.custom_minimum_size.y = item.get_total_height(get_width()) + 2
 	text_edit.text = item.origin_text.substr(0, item.origin_text.length())
 	text_edit.get_parent_control().position = Vector2(0, item.line_y_point + 1) # 设置位置
 	

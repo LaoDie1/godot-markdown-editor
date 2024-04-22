@@ -86,6 +86,7 @@ layout_mode = 2
 
 [node name="DebugEditor" type="TextEdit" parent="VBoxContainer/HSplitContainer/MarginContainer/Right"]
 unique_name_in_owner = true
+visible = false
 custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 editable = false
