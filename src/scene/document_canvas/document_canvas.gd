@@ -5,6 +5,7 @@
 # - datetime: 2024-04-22 10:52:13
 # - version: 4.3.0.dev5
 #============================================================
+## 绘制文档中的内容
 extends Control
 
 
@@ -33,6 +34,10 @@ var _selected_line_item : LineItem = null:
 		else:
 			_selected_line_idx = line_items.find(_selected_line_item)
 var _selected_line_idx : int = -1
+
+# 这个组中的行。后续用于片段分页处理内容
+var _group_to_line_items : Dictionary = {}
+
 
 
 #============================================================
@@ -67,8 +72,8 @@ func _draw():
 	line_offset_point += 3
 	_draw_separation_line(line_offset_point, Config.accent_color)
 	
-	# 更新内容
-	_draw_lines()
+	# 绘制行
+	_redraw_lines()
 
 
 func _gui_input(event):
@@ -139,8 +144,10 @@ func _draw_separation_line(y_point: float, color: Color):
 
 
 # 绘制每行内容
-func _draw_lines():
+func _redraw_lines():
 	p_to_item.clear()
+	_group_to_line_items.clear()
+	
 	var width = get_width()
 	for item in line_items:
 		draw_line_item(item, width)
@@ -154,6 +161,11 @@ func draw_line_item(item: LineItem, width : float):
 	# 配置数据
 	item.line_y_point = line_offset_point
 	p_to_item[item.line_y_point] = item
+	
+	var group = int(line_offset_point) % 100
+	if not _group_to_line_items.has(group):
+		_group_to_line_items[group] = {}
+	_group_to_line_items[group][item] = null
 	
 	# 开始绘制
 	item.draw_to(self, margin, width)

@@ -162,4 +162,18 @@ func draw_to(canvas: CanvasItem, margin: Margin, width: float):
 		font_color, 
 		line_break
 	)
+	
+	var serial_number_font_size = 14
+	var left_offset = font.get_string_size(str(id), HORIZONTAL_ALIGNMENT_LEFT, -1, serial_number_font_size)
+	canvas.draw_multiline_string(
+		Config.font, 
+		Vector2(-8 - left_offset.x, pos.y), 
+		str(id), 
+		HORIZONTAL_ALIGNMENT_RIGHT, 
+		-1, 
+		serial_number_font_size, 
+		-1,
+		Color(font_color.r, font_color.g, font_color.b, 0.33), 
+		line_break
+	)
 
