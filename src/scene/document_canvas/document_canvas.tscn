@@ -58,10 +58,10 @@ script = ExtResource("1_q8bgb")
 [node name="TextEdit" type="TextEdit" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = -135.0
+offset_left = -174.0
 offset_top = 44.0
 offset_right = -49.0
-offset_bottom = 114.0
+offset_bottom = 135.0
 theme = SubResource("Theme_86keu")
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_constants/line_spacing = 0

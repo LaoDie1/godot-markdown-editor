@@ -100,6 +100,7 @@ func get_total_height(width : int = -1) -> float:
 		return get_font_height() + Config.line_spacing
 	return font.get_multiline_string_size(text, alignment, width, font_size).y + Config.line_spacing
 
+
 ## 一行的字体的高度
 func get_font_height() -> float:
 	return font.get_height(font_size)

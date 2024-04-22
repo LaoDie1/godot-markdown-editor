@@ -77,7 +77,6 @@ static func write_as_string(
 			_:
 				assert(false, "错误的编码类型")
 		
-		
 		file.store_string(en_text)
 		file = null
 		return true
@@ -135,10 +134,9 @@ static func read_as_lines(file_path: String) -> Array[String]:
 	var reader = FileAccess.open(file_path, FileAccess.READ)
 	var list : Array[String] = []
 	if reader:
-		while true:
+		while not reader.eof_reached():
 			list.append(reader.get_line())
-			if reader.eof_reached():
-				break
+		list.append(reader.get_line())
 	return list
 
 
