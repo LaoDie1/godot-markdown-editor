@@ -90,4 +90,3 @@ editor_only = false
 
 [connection signal="gui_input" from="MarginContainer/TextEdit" to="." method="_on_text_edit_gui_input"]
 [connection signal="resized" from="MarginContainer/TextEdit" to="." method="_on_text_edit_resized"]
-[connection signal="visibility_changed" from="MarginContainer/TextEdit" to="." method="_on_text_edit_visibility_changed"]

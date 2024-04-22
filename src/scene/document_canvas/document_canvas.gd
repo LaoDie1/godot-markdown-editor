@@ -35,10 +35,6 @@ var _selected_line_idx : int = -1
 #============================================================
 #  内置
 #============================================================
-func _ready():
-	resized.connect(text_edit.hide)
-
-
 func _draw():
 	line_offset_point = 0
 	var width = get_width()
@@ -69,11 +65,8 @@ func _draw():
 
 func _gui_input(event):
 	if InputUtil.is_click_left(event, false):
-		text_edit.visible = false
-		
-		# 查找并处理这个位置上的 item
+		_update_selected_line(true)
 		_selected_pos = get_local_mouse_position()
-		await Engine.get_main_loop().process_frame
 		for line_idx in line_items.size() - 1:
 			var item : LineItem = line_items[line_idx]
 			var next_item : LineItem = line_items[line_idx + 1]
@@ -194,19 +187,26 @@ func _delete_line(line_idx:  int) -> void:
 		
 		_update_line_after_pos(line_idx, -line_item.get_total_height(get_width()))
 
-# 更新这个行的内容
-func _update_line_by_text_edit(line_item: LineItem, hide_text_edit: bool):
-	if line_item.origin_text != text_edit.text:
-		var last_height = line_item.get_total_height(get_width())
-		# 设置内容
-		line_item.origin_text = text_edit.text
-		line_item.handle_by_path(file_path)
-		var height = line_item.get_total_height(get_width())
-		if last_height != height:
-			_update_line_after_pos( _selected_line_idx, height - last_height)
-		queue_redraw()
+
+# 更新选中行的内容
+func _update_selected_line(hide_text_edit: bool):
+	var line_item = _selected_line_item
+	if (line_item == null
+		or not text_edit.visible
+		or line_item.origin_text == text_edit.text
+	):     
+		return
+	if hide_text_edit:
+		text_edit.visible = false
 	
-	text_edit.visible = not hide_text_edit
+	var last_height = line_item.get_total_height(get_width())
+	# 设置内容
+	line_item.origin_text = text_edit.text
+	line_item.handle_by_path(file_path)
+	var height = line_item.get_total_height(get_width())
+	if last_height != height:
+		_update_line_after_pos( _selected_line_idx, height - last_height)
+	queue_redraw()
 
 
 # 更新这个索引的行之后的位置偏移 
@@ -222,18 +222,12 @@ func _update_line_after_pos(item_idx: int, offset: float):
 #============================================================
 #  连接信号
 #============================================================
-func _on_text_edit_visibility_changed():
-	if text_edit and not text_edit.visible:
-		if _selected_line_item:
-			_update_line_by_text_edit(_selected_line_item, true)
-
-
 func _on_text_edit_gui_input(event):
 	if event is InputEventKey:
 		if InputUtil.is_key(event, KEY_ENTER):
-			_update_line_by_text_edit(_selected_line_item, true)
+			_update_selected_line(true)
 			get_tree().root.set_input_as_handled()
-			text_edit.visible = false
+			_update_selected_line(true)
 			
 			if not Input.is_key_pressed(KEY_CTRL) and _selected_line_item:
 				# 插入新的行
@@ -250,26 +244,32 @@ func _on_text_edit_gui_input(event):
 				_select_line(new_line_item)
 		
 		elif InputUtil.is_key(event, KEY_BACKSPACE):
-			if text_edit.get_caret_column()==0 and text_edit.get_caret_line() == 0:
+			if text_edit.get_selected_text() == "" and text_edit.get_caret_column()==0 and text_edit.get_caret_line() == 0:
 				var selected_line_idx = _selected_line_idx
 				if selected_line_idx > 0:
+					var previous_line = line_items[selected_line_idx - 1]
+					var text_count = previous_line.origin_text.length()
 					_delete_line(_selected_line_idx)
 					get_tree().root.set_input_as_handled()
 					queue_redraw()
 					
 					await Engine.get_main_loop().process_frame
-					await Engine.get_main_loop().process_frame
-					_selected_line_item = line_items[selected_line_idx - 1]
+					_selected_line_item = previous_line
 					_select_line(_selected_line_item)
-					
+					text_edit.set_caret_column(text_count)
+				
+			else:
+				(func():
+					_selected_line_item.origin_text = text_edit.text
+					_selected_line_item.handle_by_path(file_path)
+				).call_deferred()
 
 
 func _on_text_edit_resized():
 	if _selected_line_item and text_edit.visible:
-		await Engine.get_main_loop().process_frame
 		var height = _selected_line_item.get_total_height_by_text(text_edit.text, get_width())
 		var last_height = _selected_line_item.get_total_height(get_width())
 		_selected_line_item.line_y_point += height - last_height
-		_update_line_by_text_edit(_selected_line_item, false)
+		_update_selected_line(false)
 		_update_line_after_pos( _selected_line_idx, height - last_height)
 

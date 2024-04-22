@@ -35,6 +35,7 @@ var type : int = PName.LineType.Normal
 var line_y_point : int 
 var id : int
 
+var line_break : int = TextServer.BREAK_ADAPTIVE | TextServer.BREAK_GRAPHEME_BOUND # 换行方式
 var indent: int = 0
 var font : Font
 var alignment : int
@@ -108,7 +109,7 @@ func get_total_height(width : int) -> float:
 func get_total_height_by_text(t: String, width: float) -> float:
 	if t.strip_edges() == "":
 		return get_font_height()
-	return font.get_multiline_string_size(t, alignment, width, font_size, -1, TextServer.BREAK_GRAPHEME_BOUND).y + Config.line_spacing
+	return font.get_multiline_string_size(t, alignment, width, font_size, -1, line_break).y + Config.line_spacing
 
 
 
@@ -133,6 +134,6 @@ func draw_to(canvas: CanvasItem, margin: Rect2, width: float):
 		font_size, 
 		-1,
 		font_color, 
-		TextServer.BREAK_GRAPHEME_BOUND
+		line_break
 	)
 
