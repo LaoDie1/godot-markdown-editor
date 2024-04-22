@@ -102,6 +102,8 @@ func open_file(path: String) -> void:
 	LineItem.reset_incr_id()
 	file_path = path
 	line_items.clear()
+	_selected_line_item = null
+	text_edit.hide()
 	
 	# 处理每行
 	var origin_lines = FileUtil.read_as_lines(path)
@@ -198,6 +200,7 @@ func _update_selected_line(hide_text_edit: bool):
 		return
 	if hide_text_edit:
 		text_edit.visible = false
+		_selected_line_item = null
 	
 	var last_height = line_item.get_total_height(get_width())
 	# 设置内容
@@ -225,8 +228,7 @@ func _update_line_after_pos(item_idx: int, offset: float):
 func _on_text_edit_gui_input(event):
 	if event is InputEventKey:
 		if InputUtil.is_key(event, KEY_ENTER):
-			_update_selected_line(true)
-			get_tree().root.set_input_as_handled()
+			Engine.get_main_loop().root.set_input_as_handled()
 			_update_selected_line(true)
 			
 			if not Input.is_key_pressed(KEY_CTRL) and _selected_line_item:
@@ -244,13 +246,16 @@ func _on_text_edit_gui_input(event):
 				_select_line(new_line_item)
 		
 		elif InputUtil.is_key(event, KEY_BACKSPACE):
-			if text_edit.get_selected_text() == "" and text_edit.get_caret_column()==0 and text_edit.get_caret_line() == 0:
-				var selected_line_idx = _selected_line_idx
+			if (text_edit.get_selected_text() == "" 
+				and text_edit.get_caret_column() == 0 
+				and text_edit.get_caret_line() == 0
+			):
+				var selected_line_idx : int = _selected_line_idx
 				if selected_line_idx > 0:
-					var previous_line = line_items[selected_line_idx - 1]
-					var text_count = previous_line.origin_text.length()
+					Engine.get_main_loop().root.set_input_as_handled()
+					var previous_line : LineItem = line_items[selected_line_idx - 1]
+					var text_count : int = previous_line.origin_text.length()
 					_delete_line(_selected_line_idx)
-					get_tree().root.set_input_as_handled()
 					queue_redraw()
 					
 					await Engine.get_main_loop().process_frame
@@ -262,7 +267,10 @@ func _on_text_edit_gui_input(event):
 				(func():
 					_selected_line_item.origin_text = text_edit.text
 					_selected_line_item.handle_by_path(file_path)
+					text_edit.custom_minimum_size.y = 0
+					queue_redraw()
 				).call_deferred()
+				
 
 
 func _on_text_edit_resized():
@@ -273,3 +281,6 @@ func _on_text_edit_resized():
 		_update_selected_line(false)
 		_update_line_after_pos( _selected_line_idx, height - last_height)
 
+
+func _on_text_edit_focus_exited():
+	_update_selected_line(true)

@@ -50,7 +50,7 @@ func _init(text: String, params: Dictionary = {}):
 	id = _incr_id
 	
 	self.origin_text = text
-	self.text = text + "\n"
+	self.text = text
 	font = Config.font
 	alignment = HORIZONTAL_ALIGNMENT_LEFT
 	font_size = Config.font_size
