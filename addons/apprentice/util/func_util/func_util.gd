@@ -126,7 +126,7 @@ class _OnceTimer extends BaseExecutor:
 				self.start(over_time)
 			else:
 				self.timeout.emit()
-		)
+		, Object.CONNECT_ONE_SHOT)
 	
 	func _finished():
 		super._finished()
@@ -227,7 +227,7 @@ class _IntermittentListTimer extends BaseExecutor:
 ##[br]
 ##[br][code]callback[/code]  执行的方法
 ##[br][code]over_time[/code]  结束时间
-##[br][code]delay_time[/code]  延迟执行调用方法
+##[br][code]delay_time[/code]  延迟执行调用方法(如果以 call_deferred 方式调用, 请使用 [method execute] 方法)
 ##[br][code]to_node[/code]  执行这个功能的节点依附于这个节点。建议传入这个参数，否则如果
 ##callback 参数中处理的对象如果是无效的，会导致游戏闪退。
 ##[br][code]return[/code]  返回执行对象

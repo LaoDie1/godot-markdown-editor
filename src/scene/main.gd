@@ -12,6 +12,7 @@ extends Control
 @onready var document_canvas = %DocumentCanvas
 @onready var debug_editor = %DebugEditor
 @onready var open_file_dialog = %OpenFileDialog
+@onready var file_item_list = %FileItemList
 
 
 const DEBUG_CONTENT = """
@@ -36,8 +37,14 @@ func _ready():
 		"/File/Save": SimpleMenu.parse_shortcut("Ctrl+S"),
 	})
 	
-	open_file_dialog.current_dir = Config.get_value(ConfigKey.Path.current_dir, "")
-	print("current dir: ", Config.get_value(ConfigKey.Path.current_dir, ""))
+	var current_dir = Config.get_value(ConfigKey.Path.current_dir, "")
+	open_file_dialog.current_dir = current_dir
+	if FileUtil.dir_exists(current_dir):
+		for file in FileUtil.scan_file(current_dir):
+			if file.get_extension() in ["md", "txt"]:
+				file_item_list.add_item(file)
+				file_item_list.set_item_metadata(file_item_list.item_count - 1, file)
+	
 
 
 func _process(delta):
@@ -61,8 +68,10 @@ func _on_menu_menu_pressed(idx, menu_path):
 	match menu_path:
 		"/File/Open":
 			open_file_dialog.popup_centered_ratio(0.75)
+		
 		"/File/Save":
-			pass
+			push_error("暂未实现功能")
+			printerr("暂未实现功能")
 		
 		"/File/Print":
 			var text = document_canvas.get_as_string()
@@ -74,3 +83,7 @@ func _on_open_file_dialog_file_selected(path: String):
 	document_canvas.open_file(path)
 	print(path)
 
+
+func _on_file_item_list_item_selected(index: int):
+	var file_path = file_item_list.get_item_metadata(index)
+	document_canvas.open_file(file_path)

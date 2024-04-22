@@ -11,11 +11,14 @@ extends Control
 signal selected(line_item: LineItem)
 
 
-@export var margin : Rect2 = Rect2(8, 0, 8, 0)
 
 @onready var text_edit : TextEdit = %TextEdit
 
 
+var margin : Margin = Margin.new({
+	left = 8,
+	right = 8,
+})
 var file_path : String = ""
 var line_offset_point : float = 0
 var line_items : Array[LineItem] = []
@@ -35,6 +38,11 @@ var _selected_line_idx : int = -1
 #============================================================
 #  内置
 #============================================================
+func _ready():
+	_init_line_items([""])
+	queue_redraw()
+
+
 func _draw():
 	line_offset_point = 0
 	var width = get_width()
@@ -55,9 +63,10 @@ func _draw():
 	line_offset_point += top_item_left.get_total_height( -1 ) + 2
 	
 	# 顶部分割线
-	draw_line(Vector2(0, line_offset_point), Vector2(size.x, line_offset_point), Config.accent_color, 1)
+	_draw_separation_line(1, Config.accent_color)
+	_draw_separation_line(line_offset_point, Config.accent_color)
 	line_offset_point += 3
-	draw_line(Vector2(0, line_offset_point), Vector2(size.x, line_offset_point), Config.accent_color, 1)
+	_draw_separation_line(line_offset_point, Config.accent_color)
 	
 	# 更新内容
 	_draw_lines()
@@ -72,7 +81,7 @@ func _gui_input(event):
 			var next_item : LineItem = line_items[line_idx + 1]
 			if _selected_pos.y >= item.line_y_point and _selected_pos.y < next_item.line_y_point:
 				_selected_line_item = item
-				_select_line(_selected_line_item)
+				_edit_line(_selected_line_item)
 				queue_redraw()
 				break
 
@@ -87,38 +96,47 @@ func get_as_string() -> String:
 		text += "\n"
 	return text
 
-
+## 获取宽度
 func get_width() -> float:
-	return size.x - margin.position.x - margin.size.x
-
+	return size.x - margin.left - margin.right
 
 # 绘制位置向下偏移
-func _line_point_offset(item: LineItem, width: float):
+func _move_line_point(item: LineItem, width: float):
 	line_offset_point += item.get_total_height(width)
 
 
 ## 打开绘制的文件
 func open_file(path: String) -> void:
 	LineItem.reset_incr_id()
+	
 	file_path = path
-	line_items.clear()
 	_selected_line_item = null
+	line_items.clear()
 	text_edit.hide()
 	
 	# 处理每行
 	var origin_lines = FileUtil.read_as_lines(path)
+	_init_line_items(origin_lines)
+	
+	queue_redraw()
+
+
+func _init_line_items(string_lines: Array):
 	match file_path.get_extension().to_lower():
 		"md", "txt":
-			for line in origin_lines:
+			for line in string_lines:
 				var item = LineItem.new(line)
 				item.handle_md()
 				line_items.append( item )
 		
 		_:
-			for line in origin_lines:
+			for line in string_lines:
 				line_items.append( LineItem.new(line) )
-	
-	queue_redraw()
+	line_items.append(LineItem.new(""))
+
+
+func _draw_separation_line(y_point: float, color: Color):
+	draw_line(Vector2(0, y_point), Vector2(size.x, y_point), color, 1)
 
 
 # 绘制每行内容
@@ -141,16 +159,16 @@ func draw_line_item(item: LineItem, width : float):
 	# 开始绘制
 	item.draw_to(self, margin, width)
 	# 向下偏移
-	_line_point_offset(item, get_width())
+	_move_line_point(item, get_width())
 
 
-# 选中行
-func _select_line(item: LineItem):
+# 编辑行
+func _edit_line(item: LineItem):
 	text_edit.visible = true
-	text_edit.custom_minimum_size = Vector2(get_width() + 18, 0)
-	text_edit.text = item.origin_text.substr(0, item.origin_text.length())
+	text_edit.custom_minimum_size.x = get_width() + 2
 	text_edit.custom_minimum_size.y = item.get_total_height(get_width())
-	text_edit.get_parent_control().position = Vector2(0, item.line_y_point)
+	text_edit.text = item.origin_text.substr(0, item.origin_text.length())
+	text_edit.get_parent_control().position = Vector2(0, item.line_y_point + 1) # 设置位置
 	
 	text_edit.add_theme_font_size_override("font_size", item.font_size)
 	text_edit.add_theme_font_override("font", item.font)
@@ -169,6 +187,7 @@ func _insert_line(line_idx: int) -> LineItem:
 	new_line_item.line_y_point = last_item.line_y_point
 	line_items.insert(line_idx, new_line_item)
 	return new_line_item
+
 
 # 删除行
 func _delete_line(line_idx:  int) -> void:
@@ -229,7 +248,6 @@ func _on_text_edit_gui_input(event):
 	if event is InputEventKey:
 		if InputUtil.is_key(event, KEY_ENTER):
 			Engine.get_main_loop().root.set_input_as_handled()
-			_update_selected_line(true)
 			
 			if not Input.is_key_pressed(KEY_CTRL) and _selected_line_item:
 				# 插入新的行
@@ -240,10 +258,14 @@ func _on_text_edit_gui_input(event):
 				var offset : float = new_line_item.get_font_height()
 				_update_line_after_pos(new_idx, offset)
 				
-				# 选中这个行
-				await Engine.get_main_loop().process_frame
-				_selected_line_item = new_line_item
-				_select_line(new_line_item)
+				FuncUtil.execute(func():
+					# 选中这个行
+					_selected_line_item = new_line_item
+					_edit_line(new_line_item)
+					print("Edit: ", _selected_line_idx )
+				, true)
+			
+			_update_selected_line(true)
 		
 		elif InputUtil.is_key(event, KEY_BACKSPACE):
 			if (text_edit.get_selected_text() == "" 
@@ -260,17 +282,17 @@ func _on_text_edit_gui_input(event):
 					
 					await Engine.get_main_loop().process_frame
 					_selected_line_item = previous_line
-					_select_line(_selected_line_item)
+					_edit_line(_selected_line_item)
 					text_edit.set_caret_column(text_count)
 				
 			else:
-				(func():
-					_selected_line_item.origin_text = text_edit.text
-					_selected_line_item.handle_by_path(file_path)
-					text_edit.custom_minimum_size.y = 0
-					queue_redraw()
-				).call_deferred()
-				
+				FuncUtil.execute(
+					func():
+						_selected_line_item.origin_text = text_edit.text
+						_selected_line_item.handle_by_path(file_path)
+						text_edit.custom_minimum_size.y = 0
+						queue_redraw()
+				, true)
 
 
 func _on_text_edit_resized():
