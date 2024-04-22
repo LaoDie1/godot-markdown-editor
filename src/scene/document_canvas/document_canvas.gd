@@ -32,17 +32,17 @@ func _draw():
 	# 顶部文字
 	var top_item_left = LineItem.new("2024/04/22  11:35:00", {
 		font_color = Config.accent_color,
-		font_size = 13,
+		font_size = Config.top_font_size,
 		alignment = HORIZONTAL_ALIGNMENT_LEFT,
 	})
 	_draw_line_item(top_item_left, false)
 	var top_item_right = LineItem.new("共 xxx 个文字", {
 		font_color = Config.accent_color,
-		font_size = 13,
+		font_size = Config.top_font_size,
 		alignment = HORIZONTAL_ALIGNMENT_RIGHT,
 	})
 	_draw_line_item(top_item_right, false)
-	line_offset_point += top_item_left.get_total_height()
+	line_offset_point += top_item_left.get_total_height() + 2
 	
 	# 顶部分割线
 	draw_line(Vector2(0, line_offset_point), Vector2(size.x, line_offset_point), Config.accent_color, 1)
@@ -56,8 +56,10 @@ func _draw():
 func _gui_input(event):
 	if InputUtil.is_click_left(event, false):
 		text_edit.visible = false
-		# 获取这个位置上的 item
+		
+		# 查找并处理这个位置上的 item
 		_selected_pos = get_local_mouse_position()
+		await Engine.get_main_loop().process_frame
 		for idx in line_items.size() - 1:
 			var item : LineItem = line_items[idx]
 			var next_item : LineItem = line_items[idx + 1]
@@ -110,18 +112,6 @@ func draw_line_item(item: LineItem, width : float):
 	# 配置数据
 	item.font = Config.font
 	item.font_color = Config.text_color
-	match item.type:
-		PName.LineType.Normal:
-			item.font_size = Config.font_size
-		PName.LineType.Tile_Larger:
-			item.font_size = 32
-		PName.LineType.Tile_Medium:
-			item.font_size = 28
-		PName.LineType.Tile_Small:
-			item.font_size = 24
-		_:
-			push_error("其他类型")
-	
 	item.line_y_point = line_offset_point
 	p_to_item[item.line_y_point] = item
 	
@@ -170,8 +160,8 @@ func _select_line(item: LineItem):
 	await Engine.get_main_loop().process_frame
 	
 	var v = text_edit.get_line_column_at_pos( text_edit.get_local_mouse_pos() , false)
-	text_edit.set_caret_column(v.x, false)
-	text_edit.set_caret_line(v.y + 1)
+	text_edit.set_caret_column(v.x)
+	print(v.x)
 
 
 #============================================================
