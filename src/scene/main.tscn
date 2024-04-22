@@ -48,8 +48,12 @@ theme_override_constants/margin_bottom = 8
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="ReferenceRect" type="ReferenceRect" parent="VBoxContainer/MarginContainer"]
-visible = false
+[node name="DebugEditor" type="TextEdit" parent="VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
-mouse_filter = 2
-editor_only = false
+editable = false
+wrap_mode = 1
+autowrap_mode = 1
+
+[connection signal="selected" from="VBoxContainer/MarginContainer/DocumentCanvas" to="." method="_on_document_canvas_selected"]

@@ -85,3 +85,8 @@ static func get_mouse_wheel(event: InputEvent) -> int:
 			if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 				return 1
 	return 0
+
+static func is_key(event: InputEvent, keycode: Key, pressed: bool = true) -> bool:
+	if event is InputEventKey:
+		return event.pressed == pressed and event.keycode == keycode
+	return false

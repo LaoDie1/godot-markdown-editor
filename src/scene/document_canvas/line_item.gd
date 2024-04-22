@@ -36,11 +36,10 @@ var line_y_point : int
 ## 所在行
 var line : int
 
-var font : Font = Config.font
-var alignment : int = HORIZONTAL_ALIGNMENT_LEFT
+var font : Font
+var alignment : int
 var font_size : int
 var font_color : Color
-
 
 
 #============================================================
@@ -51,6 +50,10 @@ func _init(text: String, params: Dictionary = {}):
 	
 	self.origin_text = text
 	self.text = text + "\n"
+	font = Config.font
+	alignment = HORIZONTAL_ALIGNMENT_LEFT
+	font_size = Config.font_size
+	font_color = Config.text_color
 	
 	# 自动设置参数
 	if not params.is_empty():
@@ -70,15 +73,15 @@ static func reset_line():
 func handle_md():
 	var tmp = origin_text.strip_edges(true, false)
 	var idx = tmp.find(" ")
+	text = origin_text
+	type = PName.LineType.Normal
+	
 	var type_string : String
 	if idx > -1:
 		type_string = origin_text.substr(0, idx)
 	if MD_TYPE_STRING_DICT.has(type_string):
 		type = MD_TYPE_STRING_DICT[type_string]
 		text = origin_text.substr(idx + 1)
-	else:
-		text = origin_text
-		type = PName.LineType.Normal
 	
 	match type:
 		PName.LineType.Normal:
@@ -91,22 +94,36 @@ func handle_md():
 			font_size = 24
 		_:
 			font_size = Config.font_size
-			push_error("其他类型")
 
 
 ## 获取当前字符串总高度（包括换行高度）
-func get_total_height(width : int = -1) -> float:
+func get_total_height(width : int) -> float:
 	if text.strip_edges() == "":
-		return get_font_height() + Config.line_spacing
-	return font.get_multiline_string_size(text, alignment, width, font_size).y + Config.line_spacing
+		return get_font_height()
+	return font.get_multiline_string_size(text, alignment, width, font_size, -1, TextServer.BREAK_GRAPHEME_BOUND).y + Config.line_spacing
 
 
 ## 一行的字体的高度
 func get_font_height() -> float:
-	return font.get_height(font_size)
+	return font.get_height(font_size) + Config.line_spacing
+
 
 ## 获取字符串换行后的子行位置
 func get_sub_line(point: Vector2, width: float) -> int:
 	return ceili( (point.y - line_y_point) / get_font_height() )
 
+## 绘制到这个节点上
+func draw_to(canvas: CanvasItem, margin: Rect2, width: float):
+	# 绘制内容
+	canvas.draw_multiline_string(
+		font, 
+		Vector2(margin.position.x, line_y_point + get_font_height() - 4), 
+		text, 
+		alignment, 
+		width, 
+		font_size, 
+		-1,
+		font_color, 
+		TextServer.BREAK_GRAPHEME_BOUND
+	)
 

@@ -34,16 +34,17 @@ VScrollBar/styles/scroll = SubResource("StyleBoxEmpty_tqggp")
 VScrollBar/styles/scroll_focus = SubResource("StyleBoxEmpty_tqggp")
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_al0ie"]
+content_margin_left = 8.0
+content_margin_top = 4.0
 bg_color = Color(1, 0.991272, 0.898438, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_untxb"]
-bg_color = Color(0.251343, 0.752756, 0.90625, 1)
 draw_center = false
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.25098, 0.752941, 0.905882, 1)
+border_color = Color(0.925781, 0.718125, 0.39418, 1)
 
 [node name="DocumentCanvas" type="Control"]
 layout_mode = 3
@@ -69,5 +70,19 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_al0ie")
 theme_override_styles/focus = SubResource("StyleBoxFlat_untxb")
 wrap_mode = 1
 autowrap_mode = 1
+scroll_fit_content_height = true
 
+[node name="ReferenceRect" type="ReferenceRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+editor_only = false
+
+[connection signal="gui_input" from="TextEdit" to="." method="_on_text_edit_gui_input"]
+[connection signal="resized" from="TextEdit" to="." method="_on_text_edit_resized"]
 [connection signal="visibility_changed" from="TextEdit" to="." method="_on_text_edit_visibility_changed"]
