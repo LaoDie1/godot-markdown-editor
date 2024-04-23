@@ -71,12 +71,17 @@ size_flags_horizontal = 0
 size_flags_vertical = 0
 theme = SubResource("Theme_86keu")
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_selected_color = Color(1, 0.998169, 0.882813, 1)
+theme_override_colors/caret_color = Color(0, 0, 0, 0.65098)
+theme_override_constants/outline_size = 0
 theme_override_constants/line_spacing = 0
+theme_override_constants/caret_width = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_al0ie")
 theme_override_styles/focus = SubResource("StyleBoxFlat_untxb")
 wrap_mode = 1
 autowrap_mode = 1
 scroll_fit_content_height = true
+caret_blink = true
 
 [node name="ReferenceRect" type="ReferenceRect" parent="."]
 visible = false

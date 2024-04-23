@@ -202,7 +202,7 @@ func draw_to(canvas: CanvasItem, width: float):
 			canvas.draw_rect( rect, Color(0,0,0,0.1) )
 		
 		PName.LineType.Colon:
-			var y = line_y_point + get_font_height() / 2 + line_margin.top
+			var y = line_y_point + get_font_height() / 2 + line_margin.top + 4
 			canvas.draw_circle( Vector2(10, y), 4, Color(0,0,0,0.33))
 	
 	var text_width : float = width - line_margin.left

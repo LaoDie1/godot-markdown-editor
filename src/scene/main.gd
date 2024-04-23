@@ -7,14 +7,6 @@
 #============================================================
 extends Control
 
-
-@onready var menu = %Menu
-@onready var document_canvas = %DocumentCanvas
-@onready var debug_editor = %DebugEditor
-@onready var open_file_dialog = %OpenFileDialog
-@onready var file_item_list : ItemList = %FileItemList
-
-
 const DEBUG_CONTENT = """
 ID: {id}
 FONT_HEIGHT: {font_height}
@@ -24,6 +16,24 @@ FONT_SIZE: {font_size}
 TEXT: {origin_text}
 """
 
+@onready var menu : SimpleMenu = %Menu
+@onready var document_canvas : DocumentCanvas = %DocumentCanvas
+
+@onready var debug_editor = %DebugEditor
+@onready var file_item_list : ItemList = %FileItemList
+@onready var open_file_dialog = %OpenFileDialog
+@onready var save_file_dialog: FileDialog = %SaveFileDialog
+
+var current_file : String:
+	set(v):
+		if current_file != v:
+			current_file = v
+			if current_file != "":
+				document_canvas.open_file(current_file)
+			else:
+				document_canvas.file_path = ""
+				document_canvas.init_lines([])
+
 
 #============================================================
 #  内置
@@ -32,10 +42,15 @@ func _ready():
 	menu.init_menu({
 		"File": ["New", "-", "Open", "Save", "-", "Print"]
 	})
-	
 	menu.init_shortcut({
+		"/File/New": SimpleMenu.parse_shortcut("Ctrl+N"),
 		"/File/Open": SimpleMenu.parse_shortcut("Ctrl+O"),
 		"/File/Save": SimpleMenu.parse_shortcut("Ctrl+S"),
+	})
+	menu.init_icon({
+		"/File/New": Icons.get_icon("File"),
+		"/File/Open": Icons.get_icon("Load"),
+		"/File/Save": Icons.get_icon("Save"),
 	})
 	
 	var current_dir = Config.get_value(ConfigKey.Path.current_dir, "")
@@ -53,9 +68,24 @@ func _process(delta):
 #============================================================
 #  自定义
 #============================================================
-func add_file_item(file_path):
-	file_item_list.add_item(file_path)
-	file_item_list.set_item_metadata(file_item_list.item_count - 1, file_path)
+func add_file_item(file_path: String):
+	if FileAccess.file_exists(file_path):
+		var idx : int = file_item_list.item_count
+		file_item_list.add_item(file_path.get_file())
+		file_item_list.set_item_metadata(idx, file_path)
+		file_item_list.set_item_tooltip(idx, file_path)
+
+
+func open_file(file_path: String):
+	current_file = file_path
+
+func save_file(file_path: String):
+	var text = document_canvas.get_string()
+	if FileUtil.write_as_string(file_path, text):
+		print("已保存文件：", file_path)
+		current_file = file_path
+	else:
+		printerr("保存失败：", FileAccess.get_open_error())
 
 
 #============================================================
@@ -72,23 +102,25 @@ func _on_document_canvas_selected(line_item: LineItem):
 func _on_menu_menu_pressed(idx, menu_path):
 	match menu_path:
 		"/File/New":
-			document_canvas.file_path = ""
-			document_canvas.init_lines([])
+			current_file = ""
+			file_item_list.deselect_all()
 		
 		"/File/Open":
-			open_file_dialog.popup_centered_ratio(0.75)
+			open_file_dialog.popup_centered_ratio()
 		
 		"/File/Save":
-			push_error("暂未实现功能")
-			printerr("暂未实现功能")
+			if current_file == "" or not FileAccess.file_exists(current_file):
+				save_file_dialog.popup_centered_ratio()
+			else:
+				save_file(current_file)
 		
 		"/File/Print":
-			var text = document_canvas.get_as_string()
+			var text = document_canvas.get_string()
 			print(text)
 
 
 func _on_open_file_dialog_file_selected(path: String):
-	document_canvas.open_file(path)
+	current_file = path
 	Config.set_value(ConfigKey.Path.current_dir, path.get_base_dir())
 	if Config.add_opened_file(path):
 		add_file_item(path)
@@ -102,4 +134,9 @@ func _on_open_file_dialog_file_selected(path: String):
 
 func _on_file_item_list_item_selected(index: int):
 	var file_path = file_item_list.get_item_metadata(index)
-	document_canvas.open_file(file_path)
+	open_file(file_path)
+
+
+func _on_save_file_dialog_file_selected(path: String) -> void:
+	save_file(path)
+

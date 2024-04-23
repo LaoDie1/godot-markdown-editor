@@ -32,6 +32,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 0
 
 [node name="Menu" type="MenuBar" parent="VBoxContainer"]
 unique_name_in_owner = true
@@ -76,8 +77,8 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_right = 4
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
 [node name="DocumentCanvas" parent="VBoxContainer/HSplitContainer/MarginContainer/Right/ScrollContainer/MarginContainer" instance=ExtResource("2_850oq")]
@@ -93,6 +94,12 @@ editable = false
 wrap_mode = 1
 autowrap_mode = 1
 
+[node name="PanelContainer" type="PanelContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/PanelContainer"]
+layout_mode = 2
+
 [node name="OpenFileDialog" type="FileDialog" parent="."]
 unique_name_in_owner = true
 title = "Open a File"
@@ -102,8 +109,13 @@ file_mode = 0
 access = 2
 filters = PackedStringArray("*.md;Markdown File", "*.txt;Text File")
 
+[node name="SaveFileDialog" type="FileDialog" parent="."]
+unique_name_in_owner = true
+access = 2
+
 [connection signal="menu_pressed" from="VBoxContainer/Menu" to="." method="_on_menu_menu_pressed"]
 [connection signal="item_selected" from="VBoxContainer/HSplitContainer/Left/FileItemList" to="." method="_on_file_item_list_item_selected"]
 [connection signal="selected" from="VBoxContainer/HSplitContainer/MarginContainer/Right/ScrollContainer/MarginContainer/DocumentCanvas" to="." method="_on_document_canvas_selected"]
 [connection signal="file_selected" from="OpenFileDialog" to="." method="_on_open_file_dialog_file_selected"]
 [connection signal="visibility_changed" from="OpenFileDialog" to="." method="_on_open_file_dialog_visibility_changed"]
+[connection signal="file_selected" from="SaveFileDialog" to="." method="_on_save_file_dialog_file_selected"]

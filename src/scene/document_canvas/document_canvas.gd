@@ -106,7 +106,7 @@ func _gui_input(event):
 #============================================================
 #  自定义
 #============================================================
-func get_as_string() -> String:
+func get_string() -> String:
 	var text = ""
 	for line_item in line_items:
 		text += line_item.origin_text
@@ -142,6 +142,7 @@ func init_lines(lines: Array) -> void:
 	_init_string_lines(lines)
 	
 	queue_redraw()
+
 
 func _init_string_lines(string_lines: Array):
 	match file_path.get_extension().to_lower():
@@ -218,7 +219,7 @@ func _update_line_after_pos(item_idx: int, offset: float):
 # 编辑行
 func _edit_line(item: LineItem):
 	text_edit.visible = true
-	text_edit.custom_minimum_size.x = get_width() + 2
+	text_edit.custom_minimum_size.x = get_width() + 4
 	text_edit.custom_minimum_size.y = item.get_height(get_width())
 	text_edit.text = item.origin_text.substr(0, item.origin_text.length())
 	text_edit.get_parent_control().position = Vector2(0, item.line_y_point + 1) # 设置位置
@@ -234,8 +235,10 @@ func _edit_line(item: LineItem):
 
 
 # 插入行
-func _insert_line(line_idx: int) -> LineItem:
-	var new_line_item = LineItem.new("")
+func _insert_line(line_idx: int, text: String = "") -> LineItem:
+	var new_line_item = LineItem.new(text)
+	if text != "":
+		new_line_item.handle_by_path(file_path)
 	var last_item = line_items[line_idx]
 	new_line_item.line_y_point = last_item.line_y_point
 	line_items.insert(line_idx, new_line_item)
@@ -294,7 +297,10 @@ func _on_text_edit_gui_input(event):
 				Engine.get_main_loop().root.set_input_as_handled()
 				# 插入新的行
 				var new_idx : int = _selected_line_idx + 1
-				var new_line_item : LineItem = _insert_line(new_idx)
+				var text : String = ""
+				if _selected_line_item.type == PName.LineType.Colon:
+					text = "- "
+				var new_line_item : LineItem = _insert_line(new_idx, text)
 				
 				# 更新后面行的偏移
 				var offset : float = new_line_item.get_height_of_one_line()

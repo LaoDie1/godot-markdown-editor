@@ -11,19 +11,16 @@ extends Node
 @onready var font : Font = Engine.get_main_loop().current_scene.get_theme_default_font()
 
 
-var config_file_path : String:
-	get: 
-		return OS.get_cache_dir().path_join("Godot/.markdown_editor_config.cfg")
+var config_file_path : String = OS.get_config_dir().path_join("Godot/.markdown_editor_config.cfg")
 var config_file : ConfigFile = ConfigFile.new()
 
 
-var opened_file_paths : Dictionary = {}
+var opened_file_paths : Array = []
 var top_font_size : int = 14
 var font_size : int = 18
 var accent_color : Color = Color(0.7578, 0.5261, 0.2944, 1)
 var text_color : Color = Color(0,0,0,0.8)
 var line_spacing : float = 2
-
 
 
 #============================================================
@@ -37,7 +34,8 @@ func _init():
 	if FileAccess.file_exists(path):
 		var err = config_file.load(path)
 		if err == OK:
-			opened_file_paths = get_value(ConfigKey.Path.opened_files, {})
+			_init_config()
+			
 		else:
 			push_error( "Error opening configuration file: ", error_string(err) )
 	else:
@@ -46,6 +44,7 @@ func _init():
 
 func _notification(what):
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		_update_config()
 		var err = config_file.save(config_file_path)
 		if err != OK:
 			push_error( "Error saving configuration file: ", error_string(err) )
@@ -58,6 +57,24 @@ func _notification(what):
 #============================================================
 #  自定义
 #============================================================
+var _config_propertys : Array = [
+	"top_font_size", "font_size", "accent_color", "text_color", "line_spacing",
+]
+
+func _init_config():
+	#print( config_file.encode_to_text() )
+	opened_file_paths = get_opened_files()
+	for property in _config_propertys:
+		if config_file.has_section_key("", property):
+			self[property] = config_file.get_value("", property)
+
+
+func _update_config():
+	set_value(ConfigKey.Path.opened_files, opened_file_paths)
+	for property in _config_propertys:
+		config_file.set_value("", property, self[property])
+
+
 func get_value(path: String, default = null):
 	if path.begins_with("/"):
 		path = path.substr(1)
@@ -68,18 +85,17 @@ func get_value(path: String, default = null):
 func set_value(path: String, value):
 	if path.begins_with("/"):
 		path = path.substr(1)
-	print("<修改配置> ", path, ": ", value)
 	var values = path.split("/")
 	config_file.set_value(values[0], values[1], value)
 
 
 func add_opened_file(file_path: String) -> bool:
 	if not opened_file_paths.has(file_path):
-		opened_file_paths[file_path] = null
+		opened_file_paths.append(file_path)
 		set_value(ConfigKey.Path.opened_files, opened_file_paths)
 		return true
 	return false
 
 func get_opened_files() -> Array:
-	return get_value(ConfigKey.Path.opened_files, {}).keys()
+	return get_value(ConfigKey.Path.opened_files, [])
 
