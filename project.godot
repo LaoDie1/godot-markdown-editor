@@ -18,13 +18,13 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-AutoLoadConfig="*res://addons/apprentice/config/auto_load_config.gd"
 TimeBus="*res://addons/apprentice/autoload/time_bus.gd"
 Config="*res://src/script/config.gd"
+ImageRequest="*res://src/scene/image_http_request/image_request.tscn"
 
 [display]
 
-window/size/viewport_width=1200
+window/size/viewport_width=1600
 window/size/viewport_height=1000
 
 [editor_plugins]
