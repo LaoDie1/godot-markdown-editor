@@ -116,8 +116,8 @@ static func _get_value_or_set(dict: Dictionary, key, not_exists_set: Callable = 
 
 
 ##  数据类型名称
-##[br][code]type[/code]: 数据类型枚举值
-##[br][code]return[/code]: 返回数据类型的字符串
+##[br] - [code]type[/code]  数据类型枚举值
+##[br] - [code]return[/code]  返回数据类型的字符串
 static func get_type_name(type: int) -> StringName:
 	return DATA_TYPE_TO_NAME.get(type)
 
@@ -223,10 +223,9 @@ static func get_signal_data(script: Script, signal_name: StringName):
 
 ##  获取方法数据
 ## [br]
-## [br][code]script[/code]： 脚本
-## [br][code]method[/code]： 要获取的方法数据的方法名
-## [br]
-## [br][code]return[/code]： 返回脚本的数据信息。
+## [br]- [code]script[/code]  脚本
+## [br]- [code]method[/code]  要获取的方法数据的方法名
+## [br]- [code]return[/code]  返回脚本的数据信息.
 ##  包括的 key 有 [code]name[/code], [code]args[/code], [code]default_args[/code]
 ## , [code]flags[/code], [code]return[/code], [code]id[/code]
 func find_method_data(script: Script, method: String) -> Dictionary:
@@ -252,8 +251,8 @@ static func get_extends_link(script: Script) -> PackedStringArray:
 
 ##  获取基础类型继承链类列表
 ##[br]
-##[br][code]_class[/code]  基础类型类名
-##[br][code]return[/code]  返回基础的类名列表
+##[br]- [code]_class[/code]  基础类型类名
+##[br]- [code]return[/code]  返回基础的类名列表
 static func get_extends_link_base(_class) -> PackedStringArray:
 	if _class is Script:
 		_class = _class.get_instance_base_type()
@@ -270,8 +269,8 @@ static func get_extends_link_base(_class) -> PackedStringArray:
 
 ##  生成方法代码
 ##[br]
-##[br][code]method_data[/code]  方法数据
-##[br][code]return[/code]  返回生成的代码
+##[br]- [code]method_data[/code]  方法数据
+##[br]- [code]return[/code]  返回生成的代码
 static func generate_method_code(method_data: Dictionary) -> String:
 	var temp := method_data.duplicate(true)
 	var args := ""
@@ -308,7 +307,7 @@ static func get_object_script(object: Object) -> Script:
 
 ##  对象是否是 tool 状态
 ##[br]
-##[br][code]object[/code]  返回这个对象的脚本是否是开启 tool 的状态
+##[br]- [code]object[/code]  返回这个对象的脚本是否是开启 tool 的状态
 static func is_tool(object: Object) -> bool:
 	var script = get_object_script(object)
 	return script.is_tool() if script else false
@@ -322,9 +321,9 @@ static func get_object_script_path(object: Object) -> String:
 
 ##  获取这个对象的这个方法的信息
 ##[br]
-##[br][code]object[/code]  对象
-##[br][code]method_name[/code]  方法名
-##[br][code]return[/code]  返回方法的信息
+##[br]- [code]object[/code]  对象
+##[br]- [code]method_name[/code]  方法名
+##[br]- [code]return[/code]  返回方法的信息
 static func get_object_method_data(object: Object, method_name: StringName) -> Dictionary:
 	if not is_instance_valid(object):
 		return {}
@@ -356,7 +355,7 @@ static func get_object_property_data(object: Object, proprety_name: StringName) 
 
 ##  获取内置类名称转为对象。比如将 "Node" 字符串转为 [Node] 这种 GDScriptNativeClass 类型数据
 ##[br]
-##[br][code]_class[/code]  类名称
+##[br]- [code]_class[/code]  类名称
 static func get_built_in_class (_class: StringName):
 	if not ClassDB.class_exists(_class):
 		return null
@@ -516,12 +515,15 @@ static func get_base_path(script:Script) -> String:
 
 ##  属性是否存在 Setter 或 Getter 方法
 ##[br]
-##[br][code]script[/code]  脚本
-##[br][code]propertys[/code]  属性列表
-##[br][code]return[/code]  返回结果。会是以
+##[br]- [code]script[/code]  脚本
+##[br]- [code]propertys[/code]  属性列表
+##[br]- [code]return[/code]  返回结果会是以
 ##[codeblock]
 ##{
-##  "property": {"setter": true, "getter": false,}
+##    "property": {
+##        "setter": true,
+##        "getter": false,
+##    }
 ##}
 ##[/codeblock]
 ##的结构返回
@@ -539,4 +541,61 @@ static func has_getter_or_setter(script: Script, propertys: PackedStringArray) -
 			"getter": map.has("@%s_getter" % property) or map.has("get_%s" % property),
 		}
 	return result
+
+
+## 初始化类的静态变量值为自身的名称。用于方便添加静态属性，作为配置 key 使用[br][br]
+##比如添加一个 [code]ConfigKey[/code] 类里面添加静态变量作为配置属性
+##
+##[codeblock]
+##class_name ConfigKey
+##
+##class Path:
+##    static var current_dir
+##    static var opened_files
+##
+##[/codeblock]
+##可以方便的通过传入 [code]ConfigKey.Path.current_dir[/code] 作为 key 获取配置属性值
+static func init_class_static_value(script: GDScript, is_path_key: bool) -> void:
+	var class_regex = RegEx.new()
+	class_regex.compile("^class\\s+(?<class_name>\\w+)\\s*:")
+	var var_regex = RegEx.new()
+	var_regex.compile("static\\s+var\\s+(?<var_name>\\w+)")
+	
+	# 分析
+	var p_name = script.new()
+	var data : Dictionary = {}
+	var last_class : String = ""
+	var last_var_list : Array
+	var lines = script.source_code.split("\n")
+	var result : RegExMatch
+	for line in lines:
+		result = class_regex.search(line)
+		if result:
+			# 类名
+			last_class = result.get_string("class_name")
+			last_var_list =[]
+			data[last_class] = last_var_list
+		else:
+			# 变量名
+			result = var_regex.search(line)
+			if result:
+				var var_name = result.get_string("var_name")
+				if last_class != "":
+					last_var_list.append(var_name)
+				else:
+					p_name.set(var_name, var_name.to_lower())
+	
+	# 设置值
+	var const_map = script.get_script_constant_map()
+	var object : Object
+	for c_name:String in data:
+		object = const_map[c_name].new()
+		var property_list = data[c_name]
+		for property:String in property_list:
+			if is_path_key:
+				object[property] = StringName("/" + c_name.to_lower() + "/" + property.to_lower())
+			else:
+				object[property] = StringName(property.to_lower())
+
+
 

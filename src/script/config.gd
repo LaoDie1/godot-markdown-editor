@@ -22,12 +22,14 @@ var config_file_path : String:
 		return OS.get_cache_dir().path_join("Godot/.markdown_editor_config.cfg")
 var config_file : ConfigFile = ConfigFile.new()
 
+var opened_file_paths : Dictionary = {}
+
 
 #============================================================
 #  内置
 #============================================================
 func _init():
-	init_class_static_value(ConfigKey, true)
+	ScriptUtil.init_class_static_value(ConfigKey, true)
 	Engine.get_main_loop().auto_accept_quit = false
 
 
@@ -49,55 +51,13 @@ func _enter_tree():
 			push_error( "Error opening configuration file: ", error_string(err) )
 	else:
 		print("没有配置文件")
+	
 
 
 
 #============================================================
 #  自定义
 #============================================================
-func init_class_static_value(script: GDScript, is_path_key: bool):
-	var class_regex = RegEx.new()
-	class_regex.compile("^class\\s+(?<class_name>\\w+)\\s*:")
-	var var_regex = RegEx.new()
-	var_regex.compile("static\\s+var\\s+(?<var_name>\\w+)")
-	
-	# 分析
-	var p_name = script.new()
-	var data : Dictionary = {}
-	var last_class : String = ""
-	var last_var_list : Array
-	var lines = script.source_code.split("\n")
-	var result : RegExMatch
-	for line in lines:
-		result = class_regex.search(line)
-		if result:
-			# 类名
-			last_class = result.get_string("class_name")
-			last_var_list =[]
-			data[last_class] = last_var_list
-		else:
-			# 变量名
-			result = var_regex.search(line)
-			if result:
-				var var_name = result.get_string("var_name")
-				if last_class != "":
-					last_var_list.append(var_name)
-				else:
-					p_name.set(var_name, var_name.to_lower())
-	
-	# 设置值
-	var const_map = script.get_script_constant_map()
-	var object : Object
-	for c_name:String in data:
-		object = const_map[c_name].new()
-		var property_list = data[c_name]
-		for property:String in property_list:
-			if is_path_key:
-				object[property] = StringName("/" + c_name.to_lower() + "/" + property.to_lower())
-			else:
-				object[property] = StringName(property.to_lower())
-
-
 func get_value(path: String, default = null):
 	if path.begins_with("/"):
 		path = path.substr(1)
@@ -111,3 +71,12 @@ func set_value(path: String, value):
 	print("<修改配置> ", path, ": ", value)
 	var values = path.split("/")
 	config_file.set_value(values[0], values[1], value)
+
+
+func add_opened_file(file_path: String):
+	opened_file_paths[file_path] = null
+	set_value(ConfigKey.Path.opened_files, opened_file_paths)
+
+func get_opened_files() -> Array:
+	return get_value(ConfigKey.Path.opened_files, {}).keys()
+

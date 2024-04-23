@@ -18,6 +18,7 @@ enum LineType {
 	Quote, ## 引用
 	Tag, ## 标签
 	SeparationLine, ## 分隔线
+	Code, ## 代码
 	
 	Tile_Larger = 20001, ## 大标题
 	Tile_Medium, ## 中等标题

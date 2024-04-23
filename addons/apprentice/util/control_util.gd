@@ -34,13 +34,13 @@ static func click(
 ##[br]
 ##[br][code]node[/code]  点击的节点
 ##[br][code]callable[/code]  回调方法
-##[br][code]connect_once[/code]  连接一次
-static func connect_click_event(node: Control, callable: Callable, connect_once: bool = false):
+##[br][code]execute_once[/code]  连接一次
+static func connect_click_event(node: Control, callable: Callable, execute_once: bool = false):
 	node.gui_input.connect(func(event):
 		if InputUtil.is_click_left(event):
 			callable.call()
 	, Object.CONNECT_ONE_SHOT 
-		if connect_once 
+		if execute_once 
 		else Object.CONNECT_ONE_SHOT
 	)
 

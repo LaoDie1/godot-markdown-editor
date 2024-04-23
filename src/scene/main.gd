@@ -19,6 +19,7 @@ const DEBUG_CONTENT = """
 ID: {id}
 FONT_HEIGHT: {font_height}
 TYPE: {type}
+TYPE_STRING: {type_string}
 FONT_SIZE: {font_size}
 TEXT: {origin_text}
 """
@@ -29,7 +30,7 @@ TEXT: {origin_text}
 #============================================================
 func _ready():
 	menu.init_menu({
-		"File": ["Open", "Save", "-", "Print"]
+		"File": ["New", "-", "Open", "Save", "-", "Print"]
 	})
 	
 	menu.init_shortcut({
@@ -44,7 +45,7 @@ func _ready():
 			if file.get_extension() in ["md", "txt"]:
 				file_item_list.add_item(file)
 				file_item_list.set_item_metadata(file_item_list.item_count - 1, file)
-	
+	ScriptUtil
 
 
 func _process(delta):
@@ -60,12 +61,17 @@ func _process(delta):
 func _on_document_canvas_selected(line_item: LineItem):
 	if debug_editor.visible:
 		var data = JsonUtil.object_to_dict(line_item)
-		data["font_height"] = line_item.get_total_height(document_canvas.get_width())
+		data["font_height"] = line_item.get_height(document_canvas.get_width())
+		data["type_string"] = PName.LineType.find_key(line_item.type)
 		debug_editor.text = DEBUG_CONTENT.format( data ).strip_edges()
 
 
 func _on_menu_menu_pressed(idx, menu_path):
 	match menu_path:
+		"/File/New":
+			document_canvas.file_path = ""
+			document_canvas.init_lines([])
+		
 		"/File/Open":
 			open_file_dialog.popup_centered_ratio(0.75)
 		
@@ -81,7 +87,6 @@ func _on_menu_menu_pressed(idx, menu_path):
 func _on_open_file_dialog_file_selected(path: String):
 	Config.set_value(ConfigKey.Path.current_dir, path.get_base_dir())
 	document_canvas.open_file(path)
-	print(path)
 
 
 func _on_file_item_list_item_selected(index: int):

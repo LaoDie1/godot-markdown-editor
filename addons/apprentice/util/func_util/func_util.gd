@@ -223,25 +223,6 @@ class _IntermittentListTimer extends BaseExecutor:
 #============================================================
 #  自定义
 #============================================================
-##  执行一次功能
-##[br]
-##[br][code]callback[/code]  执行的方法
-##[br][code]over_time[/code]  结束时间
-##[br][code]delay_time[/code]  延迟执行调用方法(如果以 call_deferred 方式调用, 请使用 [method execute] 方法)
-##[br][code]to_node[/code]  执行这个功能的节点依附于这个节点。建议传入这个参数，否则如果
-##callback 参数中处理的对象如果是无效的，会导致游戏闪退。
-##[br][code]return[/code]  返回执行对象
-static func execute_once(
-	callback: Callable, 
-	over_time: float = 0.0, 
-	delay_time: float = 0.0, 
-	to_node: Node = null
-) -> _OnceTimer:
-	var timer := _OnceTimer.new(callback, delay_time, over_time)
-	timer._add_to_scene(to_node)
-	return timer
-
-
 ## 执行一个片段线程
 ##[br]
 ##[br][code]duration[/code]  持续时间
@@ -325,21 +306,26 @@ static func execute_intermittent_by_list(
 ## 没别的，仅仅调用一下这个回调。
 ##[br]
 ##[br][code]callback[/code]  回调方法
-##[br][code]deferred[/code]  延迟调用
-##[br][code]deferred_value[/code]  延迟调用返回的结果值
-static func execute(callback: Callable, deferred : bool = false, deferred_value = null):
-	if not deferred:
-		return callback.call()
-	else:
-		callback.call_deferred()
-		return deferred_value
+static func execute(callback: Callable):
+	return callback.call()
+
+## 延迟调用
+static func execute_deferred(callback: Callable):
+	callback.call_deferred()
+
+## 等待一帧执行
+static func execute_process_frame(callback: Callable):
+	Engine.get_main_loop().process_frame.connect(callback, Object.CONNECT_ONE_SHOT)
+
+static func execute_physics_frame(callback: Callable):
+	Engine.get_main_loop().physics_frame.connect(callback, Object.CONNECT_ONE_SHOT)
 
 
 ## 节点在场景中时信号才连接调用一次这个 [Callable]，如果节点已经在场景中，则直接调用 [Callable] 方法
 ##[br]
 ##[br][code]_signal[/code]  信号
 ##[br][code]callback[/code]  回调方法
-static func connect_once(_signal: Signal, callback: Callable):
+static func execute_once(_signal: Signal, callback: Callable):
 	_signal.connect(callback, Object.CONNECT_ONE_SHOT)
 
 
@@ -521,21 +507,6 @@ static func inject_by_unique(
 			if not node[property]:
 				node[property] = get_path_to_node.get_node_or_null(node_path)
 	, node)
-
-
-##  等待一帧调用这个方法
-##[br]
-##[br][code]callback[/code]  调用的方法
-##[br][code]process_callback[/code]  线程类型，默认为 [constant Timer.TIMER_PROCESS_IDLE]
-static func await_process_once(
-	callback: Callable, 
-	process_callback := Timer.TIMER_PROCESS_IDLE
-) -> void:
-	if process_callback == Timer.TIMER_PROCESS_IDLE:
-		Engine.get_main_loop().process_frame.connect( callback, Object.CONNECT_ONE_SHOT )
-	else:
-		Engine.get_main_loop().physics_frame.connect( callback, Object.CONNECT_ONE_SHOT )
-
 
 ##  遍历列表
 ##[br]
