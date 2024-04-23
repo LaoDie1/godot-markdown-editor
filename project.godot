@@ -19,8 +19,8 @@ config/icon="res://icon.svg"
 [autoload]
 
 TimeBus="*res://addons/apprentice/autoload/time_bus.gd"
-Config="*res://src/script/config.gd"
-ImageRequest="*res://src/scene/image_http_request/image_request.tscn"
+Config="*res://src/global/config.gd"
+ImageRequest="*res://src/global/image_http_request/image_request.tscn"
 
 [display]
 
