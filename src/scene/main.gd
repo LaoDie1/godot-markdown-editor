@@ -12,7 +12,7 @@ extends Control
 @onready var document_canvas = %DocumentCanvas
 @onready var debug_editor = %DebugEditor
 @onready var open_file_dialog = %OpenFileDialog
-@onready var file_item_list = %FileItemList
+@onready var file_item_list : ItemList = %FileItemList
 
 
 const DEBUG_CONTENT = """
@@ -40,12 +40,8 @@ func _ready():
 	
 	var current_dir = Config.get_value(ConfigKey.Path.current_dir, "")
 	open_file_dialog.current_dir = current_dir
-	if FileUtil.dir_exists(current_dir):
-		for file in FileUtil.scan_file(current_dir):
-			if file.get_extension() in ["md", "txt"]:
-				file_item_list.add_item(file)
-				file_item_list.set_item_metadata(file_item_list.item_count - 1, file)
-	ScriptUtil
+	for file in Config.get_opened_files():
+		add_file_item(file)
 
 
 func _process(delta):
@@ -53,6 +49,13 @@ func _process(delta):
 		if document_canvas._selected_line_item:
 			_on_document_canvas_selected( document_canvas._selected_line_item )
 
+
+#============================================================
+#  自定义
+#============================================================
+func add_file_item(file_path):
+	file_item_list.add_item(file_path)
+	file_item_list.set_item_metadata(file_item_list.item_count - 1, file_path)
 
 
 #============================================================
@@ -85,8 +88,16 @@ func _on_menu_menu_pressed(idx, menu_path):
 
 
 func _on_open_file_dialog_file_selected(path: String):
-	Config.set_value(ConfigKey.Path.current_dir, path.get_base_dir())
 	document_canvas.open_file(path)
+	Config.set_value(ConfigKey.Path.current_dir, path.get_base_dir())
+	if Config.add_opened_file(path):
+		add_file_item(path)
+		file_item_list.select( file_item_list.item_count - 1 )
+	else:
+		for id in file_item_list.item_count:
+			if file_item_list.get_item_metadata(id) == path:
+				file_item_list.select(id)
+				break
 
 
 func _on_file_item_list_item_selected(index: int):

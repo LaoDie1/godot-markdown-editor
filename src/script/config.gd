@@ -11,18 +11,19 @@ extends Node
 @onready var font : Font = Engine.get_main_loop().current_scene.get_theme_default_font()
 
 
+var config_file_path : String:
+	get: 
+		return OS.get_cache_dir().path_join("Godot/.markdown_editor_config.cfg")
+var config_file : ConfigFile = ConfigFile.new()
+
+
+var opened_file_paths : Dictionary = {}
 var top_font_size : int = 14
 var font_size : int = 18
 var accent_color : Color = Color(0.7578, 0.5261, 0.2944, 1)
 var text_color : Color = Color(0,0,0,0.8)
 var line_spacing : float = 2
 
-var config_file_path : String:
-	get: 
-		return OS.get_cache_dir().path_join("Godot/.markdown_editor_config.cfg")
-var config_file : ConfigFile = ConfigFile.new()
-
-var opened_file_paths : Dictionary = {}
 
 
 #============================================================
@@ -31,6 +32,16 @@ var opened_file_paths : Dictionary = {}
 func _init():
 	ScriptUtil.init_class_static_value(ConfigKey, true)
 	Engine.get_main_loop().auto_accept_quit = false
+	
+	var path : String = config_file_path
+	if FileAccess.file_exists(path):
+		var err = config_file.load(path)
+		if err == OK:
+			opened_file_paths = get_value(ConfigKey.Path.opened_files, {})
+		else:
+			push_error( "Error opening configuration file: ", error_string(err) )
+	else:
+		print("没有配置文件")
 
 
 func _notification(what):
@@ -41,17 +52,6 @@ func _notification(what):
 		else:
 			print("已保存配置文件：", config_file_path)
 		Engine.get_main_loop().quit.call_deferred(0)
-
-
-func _enter_tree():
-	var path : String = config_file_path
-	if FileAccess.file_exists(path):
-		var err = config_file.load(path)
-		if err != OK:
-			push_error( "Error opening configuration file: ", error_string(err) )
-	else:
-		print("没有配置文件")
-	
 
 
 
@@ -73,9 +73,12 @@ func set_value(path: String, value):
 	config_file.set_value(values[0], values[1], value)
 
 
-func add_opened_file(file_path: String):
-	opened_file_paths[file_path] = null
-	set_value(ConfigKey.Path.opened_files, opened_file_paths)
+func add_opened_file(file_path: String) -> bool:
+	if not opened_file_paths.has(file_path):
+		opened_file_paths[file_path] = null
+		set_value(ConfigKey.Path.opened_files, opened_file_paths)
+		return true
+	return false
 
 func get_opened_files() -> Array:
 	return get_value(ConfigKey.Path.opened_files, {}).keys()
