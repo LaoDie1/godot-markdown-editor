@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://bt76gbf20dwl"]
+[gd_scene load_steps=7 format=3 uid="uid://bt76gbf20dwl"]
 
 [ext_resource type="Script" path="res://src/scene/main.gd" id="1_5283d"]
 [ext_resource type="Script" path="res://addons/simplemenu/simple_menu.gd" id="1_s2vjw"]
@@ -9,6 +9,8 @@ bg_color = Color(1, 0.991272, 0.898438, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2f865"]
 bg_color = Color(0, 0, 0, 0.352941)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_yd1hs"]
 
 [node name="Main" type="Control"]
 texture_filter = 1
@@ -77,11 +79,17 @@ size_flags_horizontal = 3
 [node name="Right" type="VBoxContainer" parent="VBoxContainer/HSplitContainer/MarginContainer"]
 layout_mode = 2
 
-[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/HSplitContainer/MarginContainer/Right"]
+[node name="TabContainer" type="TabContainer" parent="VBoxContainer/HSplitContainer/MarginContainer/Right"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxEmpty_yd1hs")
+current_tab = 0
+
+[node name="Canvas" type="ScrollContainer" parent="VBoxContainer/HSplitContainer/MarginContainer/Right/TabContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/HSplitContainer/MarginContainer/Right/ScrollContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/HSplitContainer/MarginContainer/Right/TabContainer/Canvas"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -89,9 +97,23 @@ theme_override_constants/margin_left = 4
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="DocumentCanvas" parent="VBoxContainer/HSplitContainer/MarginContainer/Right/ScrollContainer/MarginContainer" instance=ExtResource("2_850oq")]
+[node name="DocumentCanvas" parent="VBoxContainer/HSplitContainer/MarginContainer/Right/TabContainer/Canvas/MarginContainer" instance=ExtResource("2_850oq")]
 unique_name_in_owner = true
 layout_mode = 2
+
+[node name="TextEdit" type="MarginContainer" parent="VBoxContainer/HSplitContainer/MarginContainer/Right/TabContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 0
+
+[node name="DocumentTextEdit" type="TextEdit" parent="VBoxContainer/HSplitContainer/MarginContainer/Right/TabContainer/TextEdit"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+wrap_mode = 1
 
 [node name="DebugEditor" type="TextEdit" parent="VBoxContainer/HSplitContainer/MarginContainer/Right"]
 unique_name_in_owner = true
@@ -114,10 +136,11 @@ filters = PackedStringArray("*.md;Markdown File", "*.txt;Text File")
 [node name="SaveFileDialog" type="FileDialog" parent="."]
 unique_name_in_owner = true
 access = 2
+filters = PackedStringArray("*.md; Markdown File", "*.txt; Text File")
 
 [connection signal="menu_pressed" from="VBoxContainer/Menu" to="." method="_on_menu_menu_pressed"]
 [connection signal="item_selected" from="VBoxContainer/HSplitContainer/Left/FileItemList" to="." method="_on_file_item_list_item_selected"]
-[connection signal="selected" from="VBoxContainer/HSplitContainer/MarginContainer/Right/ScrollContainer/MarginContainer/DocumentCanvas" to="." method="_on_document_canvas_selected"]
+[connection signal="selected" from="VBoxContainer/HSplitContainer/MarginContainer/Right/TabContainer/Canvas/MarginContainer/DocumentCanvas" to="." method="_on_document_canvas_selected"]
 [connection signal="file_selected" from="OpenFileDialog" to="." method="_on_open_file_dialog_file_selected"]
 [connection signal="visibility_changed" from="OpenFileDialog" to="." method="_on_open_file_dialog_visibility_changed"]
 [connection signal="file_selected" from="SaveFileDialog" to="." method="_on_save_file_dialog_file_selected"]

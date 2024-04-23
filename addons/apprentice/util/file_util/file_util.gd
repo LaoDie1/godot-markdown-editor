@@ -52,17 +52,6 @@ const UTF_16 = &"utf-16"
 const UTF_32 = &"utf-32"
 const WCHAR = &"wchar_t" ## 宽字符
 
-const ImageType = {
-	PNG = &"png",
-	JPG = &"jpeg",
-	JPEG = &"jpeg",
-	WEBP = &"webp",
-	BMP = &"bmp",
-	TAG = &"tga",
-	WEBP_M = &"webp_m",
-	GIF = &"gif",
-}
-
 
 ##  保存字符串文件 
 ##[br]
@@ -92,6 +81,33 @@ static func write_as_string(
 		file = null
 		return true
 	return false
+
+static func load_image(file_path: String) -> Image:
+	var image = Image.load_from_file(file_path)
+	return image
+
+static func save_image(image: Image, path: String):
+	return image.save_webp(path)
+
+static func load_image_by_buff(body: PackedByteArray) -> Image:
+	var image = Image.new()
+	var file_type = FileType.get_type(body)
+	var error = OK
+	if file_type.contains("png"):
+		error = image.load_png_from_buffer(body)
+	elif file_type.contains("webp"):
+		error = image.load_webp_from_buffer(body)
+	elif file_type.contains("jpeg"):
+		error = image.load_jpg_from_buffer(body)
+	elif file_type.contains("bmp"):
+		error = image.load_bmp_from_buffer(body)
+	else:
+		printerr("其他图片类型:", file_type, " |  ", body.slice(0, 16).hex_encode().to_upper())
+	
+	if error != OK:
+		printerr("读取图片数据失败：", error, "  ", error_string(error))
+	
+	return image
 
 
 ## 文件是否存在
@@ -153,10 +169,10 @@ static func read_as_lines(file_path: String) -> Array[String]:
 
 ##  读取字符串文件
 ##[br]
-##[br][code]file_path[/code]  文件路径
-##[br][code]skip_cr[/code]  跳过 \r CR 字符。
-## If skip_cr is true, carriage return characters (\r, CR) will be ignored when parsing the UTF-8, so that only line feed characters (\n, LF) represent a new line (Unix convention).
-##[br][code]decode[/code]  将以这种编码格式读取字符串
+##[br]- [code]file_path[/code]  文件路径
+##[br]- [code]skip_cr[/code]  跳过 [code]\r[/code] CR 字符。
+##[codeblock]If skip_cr is true, carriage return characters (\r, CR) will be ignored when parsing the UTF-8, so that only line feed characters (\n, LF) represent a new line (Unix convention).[/codeblock]
+##- [code]decode[/code]  将以这种编码格式读取字符串
 static func read_as_string(
 	file_path: String, 
 	skip_cr: bool = false,
@@ -234,7 +250,6 @@ static func write_as_bytes(file_path: String, data) -> bool:
 		file.flush()
 		return true
 	return false
-
 
 ## 读取字节数据
 static func read_as_bytes(file_path: String) -> PackedByteArray:
@@ -344,46 +359,6 @@ static func get_project_real_path() -> String:
 		return ProjectSettings.globalize_path("res://")
 	else:
 		return OS.get_executable_path()
-
-
-## 根据图片二进制数据获取图片类型
-##[br]
-##[br]参考自：
-##[br] · [url=https://blog.csdn.net/qqo_aa/article/details/109083173]https://blog.csdn.net/qqo_aa/article/details/109083173[/url]
-##[br] · [url=https://blog.csdn.net/TracelessLe/article/details/107127516]https://blog.csdn.net/TracelessLe/article/details/107127516[/url]
-static func get_image_type_by_bytes(bytes: PackedByteArray) -> StringName:
-	if (bytes[0] == 0x89 and bytes[1] == 0x50 
-		and bytes[2] == 0x4E and bytes[3] == 0x47 
-		and bytes[4] == 0x0D and bytes[5] == 0x0A 
-		and bytes[6] == 0x1A and bytes[7] == 0x0A
-	):
-		return &"png"
-	elif bytes[0] == 0xff and bytes[1] == 0xd8:
-		return &"jpeg"
-	elif bytes[0] == 0x42 and bytes[1] == 0x4d:
-		return &"bmp"
-	elif bytes.slice(0, 4).get_string_from_ascii() == "RIFF":
-#		bytes.slice(9, 12).get_string_from_ascii() == "EBP"
-		var type = bytes.slice(13, 16).get_string_from_ascii()
-		if type == "P8 ": # P8后面需要有一个空格
-			#静态图
-			return &"webp"
-		elif type == "P8X":
-			#动图
-			return &"webp_m"
-	elif (bytes[0] == 0x00 and bytes[1] == 0x00
-		and (bytes[2] == 0x02 or bytes[2] == 0x10) # 未压缩 or RLE压缩
-		and bytes[3] == 0x00
-		and bytes[4] == 0x00
-	):
-		return &"tga"
-	elif (bytes[0] == 0x47 and bytes[1] == 0x49
-		and bytes[2] == 0x46 and bytes[3] == 0x38
-		and (bytes[4] == 0x39 or bytes[4] == 0x37) and bytes[5] == 0x61
-	):
-		return &"gif"
-	
-	return &""
 
 
 ## 文件分组匹配

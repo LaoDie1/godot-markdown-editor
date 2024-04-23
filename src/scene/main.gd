@@ -13,11 +13,13 @@ FONT_HEIGHT: {font_height}
 TYPE: {type}
 TYPE_STRING: {type_string}
 FONT_SIZE: {font_size}
-TEXT: {origin_text}
+SHOW_TEXT: {text}
+ORIGIN_TEXT: {origin_text}
 """
 
 @onready var menu : SimpleMenu = %Menu
 @onready var document_canvas : DocumentCanvas = %DocumentCanvas
+@onready var document_text_edit: TextEdit = %DocumentTextEdit
 
 @onready var debug_editor = %DebugEditor
 @onready var file_item_list : ItemList = %FileItemList
@@ -30,9 +32,11 @@ var current_file : String:
 			current_file = v
 			if current_file != "":
 				document_canvas.open_file(current_file)
+				document_text_edit.text = FileUtil.read_as_string(current_file)
 			else:
 				document_canvas.file_path = ""
 				document_canvas.init_lines([])
+				document_text_edit.text = ""
 
 
 #============================================================
@@ -85,6 +89,8 @@ func save_file(file_path: String):
 	if FileUtil.write_as_string(file_path, text):
 		print("已保存文件：", file_path)
 		current_file = file_path
+		add_file_item(file_path)
+		Config.add_opened_file(file_path)
 	else:
 		printerr("保存失败：", FileAccess.get_open_error())
 

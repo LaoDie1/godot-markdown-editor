@@ -12,13 +12,14 @@ class_name PName
 enum LineType {
 	Normal = 0, ## 普通行
 	
-	Colon = 10001, ## 冒号
+	UnorderedList = 10001, ## 无序列表
 	SerialNumber, ## 序号
 	Checkbox, ## 复选框
 	Quote, ## 引用
 	Tag, ## 标签
 	SeparationLine, ## 分隔线
 	Code, ## 代码
+	Image, ## 图片
 	
 	Tile_Larger = 20001, ## 大标题
 	Tile_Medium, ## 中等标题
@@ -27,7 +28,8 @@ enum LineType {
 }
 
 
-## 数据分隔
-const DATA_SPLIT_CHAR = char(0xfffff)
-
-
+enum BlockType {
+	TEXT,
+	IMAGE,
+	URL,
+}

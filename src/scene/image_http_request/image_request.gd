@@ -22,8 +22,9 @@ func _execute_next():
 	current_data = queue.pop_front()
 	
 	var err = request(current_data["url"], [], HTTPClient.METHOD_GET)
+	print("--- 请求图片：", current_data["url"])
 	if err != OK:
-		printerr("请求错误: ", error_string(err))
+		printerr("请求错误: ", err, " ", error_string(err))
 
 
 func queue_request(url: String, callback: Callable):
@@ -31,27 +32,16 @@ func queue_request(url: String, callback: Callable):
 	data["url"] = url
 	data["callback"] = callback
 	queue.push_back(data)
-	_execute_next()
+	
+	if get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+		_execute_next()
 
 
 #============================================================
 #  连接信号
 #============================================================
 func _on_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
-	var file_type = FileUtil.get_image_type_by_bytes(body)
-	var image = Image.new()
-	match file_type:
-		FileUtil.ImageType.PNG:
-			image.load_png_from_buffer(body)
-		FileUtil.ImageType.WEBP:
-			image.load_webp_from_buffer(body)
-		FileUtil.ImageType.JPG:
-			image.load_jpg_from_buffer(body)
-		FileUtil.ImageType.BMP:
-			image.load_bmp_from_buffer(body)
-		_:
-			printerr("其他图片类型")
-	
+	var image = FileUtil.load_image_by_buff(body)
 	var callback : Callable = current_data["callback"]
 	callback.call( {
 		"result": result,
@@ -60,5 +50,4 @@ func _on_request_completed(result: int, response_code: int, headers: PackedStrin
 		"body": body,
 		"image": image,
 	} )
-	
-	_execute_next()
+	_execute_next.call_deferred()

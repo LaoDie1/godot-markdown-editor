@@ -14,7 +14,6 @@ signal selected(line_item: LineItem)
 
 
 @onready var text_edit : TextEdit = %TextEdit
-@onready var image_request: HTTPRequest = %ImageRequest
 
 
 static var instance : DocumentCanvas
@@ -100,9 +99,10 @@ func _gui_input(event):
 				_edit_line(_selected_line_item)
 				queue_redraw()
 				break
-		if _selected_line_item == null and not line_items.is_empty():
-			_selected_line_item = line_items.back()
-			_edit_line(_selected_line_item)
+		if _selected_pos.y > 100:
+			if _selected_line_item == null and not line_items.is_empty():
+				_selected_line_item = line_items.back()
+				_edit_line(_selected_line_item)
 
 
 #============================================================
@@ -113,12 +113,11 @@ func get_string() -> String:
 	for line_item in line_items:
 		text += line_item.origin_text
 		text += "\n"
-	return text
+	return text.substr(0, text.length()-1)
 
 ## 获取宽度
 func get_width() -> float:
 	return size.x
-
 
 ## 打开绘制的文件
 func open_file(path: String) -> void:
@@ -139,8 +138,6 @@ func init_lines(lines: Array) -> void:
 	_selected_line_item = null
 	line_items.clear()
 	
-	if lines.is_empty():
-		lines.append("")
 	_init_string_lines(lines)
 	
 	queue_redraw()
@@ -165,7 +162,7 @@ func _init_string_lines(string_lines: Array):
 		_:
 			for line in string_lines:
 				line_items.append( LineItem.new(line) )
-	
+	# 末尾
 	line_items.append(LineItem.new(""))
 
 
@@ -183,7 +180,7 @@ func _redraw_lines():
 	pos_to_line_item.clear()
 	_group_to_line_items.clear()
 	
-	# 绘制
+	# 绘制. TODO 绘制部分内容。只绘制当前滚动到的区域的内容
 	var width : float = get_width()
 	for item in line_items:
 		draw_line_item(item, width)
@@ -242,9 +239,14 @@ func _insert_line(line_idx: int, text: String = "") -> LineItem:
 	var new_line_item = LineItem.new(text)
 	if text != "":
 		new_line_item.handle_by_path(file_path)
-	var last_item = line_items[line_idx]
-	new_line_item.line_y_point = last_item.line_y_point
-	line_items.insert(line_idx, new_line_item)
+	if line_idx < line_items.size():
+		var last_item = line_items[line_idx]
+		line_items.insert(line_idx, new_line_item)
+		new_line_item.line_y_point = last_item.line_y_point
+	else:
+		var last_item = line_items.back()
+		line_items.append(new_line_item)
+		new_line_item.line_y_point = last_item.line_y_point
 	return new_line_item
 
 
@@ -295,16 +297,19 @@ func _on_text_edit_gui_input(event):
 		if InputUtil.is_key(event, KEY_ENTER):
 			if not Input.is_key_pressed(KEY_CTRL) and _selected_line_item:
 				Engine.get_main_loop().root.set_input_as_handled()
+				
 				# 插入新的行
 				var new_idx : int = _selected_line_idx + 1
 				var text : String = ""
-				if _selected_line_item.type == PName.LineType.Colon:
+				if _selected_line_item.type == PName.LineType.UnorderedList:
 					text = "- "
 				var new_line_item : LineItem = _insert_line(new_idx, text)
 				
 				# 更新后面行的偏移
 				var offset : float = new_line_item.get_height_of_one_line()
 				_update_line_after_pos(new_idx, offset)
+				
+				_update_selected_line(true)
 				
 				FuncUtil.execute_deferred(func():
 					# 选中这个行
@@ -313,7 +318,6 @@ func _on_text_edit_gui_input(event):
 					print("Edit: ", _selected_line_idx )
 				)
 			
-			_update_selected_line(true)
 		
 		elif InputUtil.is_key(event, KEY_BACKSPACE):
 			if (text_edit.get_selected_text() == "" 
@@ -328,17 +332,20 @@ func _on_text_edit_gui_input(event):
 					_delete_line(_selected_line_idx)
 					queue_redraw()
 					
-					await Engine.get_main_loop().process_frame
-					_selected_line_item = previous_line
-					_edit_line(_selected_line_item)
-					text_edit.set_caret_column(text_count)
+					FuncUtil.execute_deferred(
+						func():
+							_selected_line_item = previous_line
+							_edit_line(_selected_line_item)
+							text_edit.set_caret_column(text_count)
+					)
 				
 			else:
 				# 延迟调用
+				var s_line = _selected_line_item
 				FuncUtil.execute_deferred(
 					func():
-						_selected_line_item.origin_text = text_edit.text
-						_selected_line_item.handle_by_path(file_path)
+						s_line.origin_text = text_edit.text
+						s_line.handle_by_path(file_path)
 						text_edit.custom_minimum_size.y = 0
 						queue_redraw()
 				)
@@ -356,7 +363,3 @@ func _on_text_edit_resized():
 func _on_text_edit_focus_exited():
 	_update_selected_line(true)
 
-
-func _on_image_request_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
-	pass # Replace with function body.
-	
