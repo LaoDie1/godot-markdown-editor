@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://c6qk1ogolkvam"]
+
+[ext_resource type="Script" path="res://src/scene/image_http_request/image_request.gd" id="1_2rf1v"]
+
+[node name="ImageRequest" type="HTTPRequest"]
+script = ExtResource("1_2rf1v")
+
+[connection signal="request_completed" from="." to="." method="_on_request_completed"]
