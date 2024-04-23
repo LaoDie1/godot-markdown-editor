@@ -8,6 +8,9 @@
 class_name LineItem
 
 
+signal height_changed
+
+
 const MD_TYPE_STRING_DICT = {
 	"": PName.LineType.Normal,
 	"#": PName.LineType.Tile_Larger,
@@ -41,7 +44,8 @@ var line_y_point : int:
 			control_node.position.y = v
 var id : int
 var control_node : Control
-# TODO 下面存在子节点行，待添加
+
+# TODO 下面存在子节点行，并进行处理（待添加）
 var children: Array[LineItem]
 
 var line_break : int = TextServer.BREAK_MANDATORY | TextServer.BREAK_ADAPTIVE | TextServer.BREAK_GRAPHEME_BOUND # 换行方式
@@ -50,6 +54,9 @@ var alignment : int
 var font_size : int
 var font_color : Color
 var line_margin : Margin = Margin.new()
+var block : Array = [] # 块
+
+var _last_height : int = 0
 
 
 #============================================================
@@ -83,15 +90,17 @@ func handle_by_path(file_path: String) -> void:
 	if text == "":
 		text = origin_text
 	handle_md()
-	#if file_path.get_extension().to_lower() in ["md", "txt"]:
-		#handle_md()
 
 ## 处理 md 文件内容
 func handle_md() -> void:
+	# 初始化属性
 	text = origin_text
 	type = PName.LineType.Normal
 	line_margin = Margin.new()
+	font_size = Config.font_size
+	line_margin.left = 8
 	
+	# 判断类型
 	var tmp = origin_text.strip_edges(true, false)
 	var type_string : String = tmp.substr(0, 3)
 	if not MD_TYPE_STRING_DICT.has(type_string):
@@ -105,8 +114,6 @@ func handle_md() -> void:
 		text = tmp.substr(type_string.length() + 1)
 	else:
 		text = origin_text
-	
-	line_margin.left = 8
 	
 	match type:
 		PName.LineType.Normal:
@@ -123,7 +130,6 @@ func handle_md() -> void:
 			line_margin.bottom = 16
 		PName.LineType.Colon, PName.LineType.SerialNumber:
 			line_margin.left = 24
-		
 		PName.LineType.Code:
 			line_margin.top = 8
 			line_margin.bottom = 8
@@ -133,8 +139,11 @@ func handle_md() -> void:
 			for i in range(1, lines.size()-1):
 				text += lines[i] + "\n"
 			line_margin.left = 16
-		_:
-			font_size = Config.font_size
+	
+	var height = get_height( DocumentCanvas.instance.get_width() )
+	if height != _last_height:
+		_last_height = height
+		height_changed.emit()
 
 
 ## 推入新的行，返回是否已经闭合
@@ -153,19 +162,20 @@ func get_height(width : float) -> float:
 func get_height_by_text(t: String, width: float) -> float:
 	if t.strip_edges() == "":
 		return get_height_of_one_line()
-	var text_width : float = width - line_margin.left
+	var text_width : float = width - line_margin.left - line_margin.right
 	return (font.get_multiline_string_size(t, alignment, text_width, font_size, -1, line_break).y 
 		+ line_margin.top 
 		+ line_margin.bottom
 	)
 
-## 一行的字体的总体高度
+## 一行的字体计算后的总体高度
 func get_height_of_one_line() -> float:
 	return (font.get_height(font_size) 
 		+ line_margin.top 
 		+ line_margin.bottom
 	)
 
+## 获取字体高度
 func get_font_height() -> float:
 	return font.get_height(font_size)
 
@@ -202,8 +212,8 @@ func draw_to(canvas: CanvasItem, width: float):
 			canvas.draw_rect( rect, Color(0,0,0,0.1) )
 		
 		PName.LineType.Colon:
-			var y = line_y_point + get_font_height() / 2 + line_margin.top + 4
-			canvas.draw_circle( Vector2(10, y), 4, Color(0,0,0,0.33))
+			var y = line_y_point + get_font_height() / 2 + line_margin.top + 6
+			canvas.draw_circle( Vector2(10, y), 3, Color(0,0,0,0.33))
 	
 	var text_width : float = width - line_margin.left
 	var text_pos : Vector2 = Vector2(line_margin.left, line_y_point + get_font_height() + line_margin.top)

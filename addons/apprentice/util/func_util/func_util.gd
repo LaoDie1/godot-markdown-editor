@@ -1140,7 +1140,7 @@ func exec(item):
 		inst.exec(item)
 
 
-## 一次性计时器，回调
+## 一次性计时器结束调用回调方法
 static func timeout(time: float, callback: Callable = Callable()) -> Signal:
 	var timeout_signal = Engine.get_main_loop().create_timer(time).timeout
 	if not callback.is_null():

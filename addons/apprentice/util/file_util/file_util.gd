@@ -52,6 +52,17 @@ const UTF_16 = &"utf-16"
 const UTF_32 = &"utf-32"
 const WCHAR = &"wchar_t" ## 宽字符
 
+const ImageType = {
+	PNG = &"png",
+	JPG = &"jpeg",
+	JPEG = &"jpeg",
+	WEBP = &"webp",
+	BMP = &"bmp",
+	TAG = &"tga",
+	WEBP_M = &"webp_m",
+	GIF = &"gif",
+}
+
 
 ##  保存字符串文件 
 ##[br]

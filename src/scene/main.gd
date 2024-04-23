@@ -72,6 +72,7 @@ func add_file_item(file_path: String):
 	if FileAccess.file_exists(file_path):
 		var idx : int = file_item_list.item_count
 		file_item_list.add_item(file_path.get_file())
+		file_item_list.set_item_icon(idx, Icons.get_icon("File"))
 		file_item_list.set_item_metadata(idx, file_path)
 		file_item_list.set_item_tooltip(idx, file_path)
 

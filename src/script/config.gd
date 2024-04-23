@@ -8,13 +8,11 @@
 extends Node
 
 
-@onready var font : Font = Engine.get_main_loop().current_scene.get_theme_default_font()
-
-
 var config_file_path : String = OS.get_config_dir().path_join("Godot/.markdown_editor_config.cfg")
 var config_file : ConfigFile = ConfigFile.new()
 
 
+var font : Font
 var opened_file_paths : Array = []
 var top_font_size : int = 14
 var font_size : int = 18
@@ -41,6 +39,9 @@ func _init():
 	else:
 		print("没有配置文件")
 
+func _enter_tree() -> void:
+	if Engine.get_main_loop().current_scene is Control:
+		font = Engine.get_main_loop().current_scene.get_theme_default_font()
 
 func _notification(what):
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_WM_GO_BACK_REQUEST:

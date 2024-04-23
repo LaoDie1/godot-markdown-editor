@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://bt76gbf20dwl"]
+[gd_scene load_steps=6 format=3 uid="uid://bt76gbf20dwl"]
 
 [ext_resource type="Script" path="res://src/scene/main.gd" id="1_5283d"]
 [ext_resource type="Script" path="res://addons/simplemenu/simple_menu.gd" id="1_s2vjw"]
@@ -7,7 +7,11 @@
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_al0ie"]
 bg_color = Color(1, 0.991272, 0.898438, 1)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2f865"]
+bg_color = Color(0, 0, 0, 0.352941)
+
 [node name="Main" type="Control"]
+texture_filter = 1
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -61,6 +65,10 @@ layout_mode = 2
 [node name="FileItemList" type="ItemList" parent="VBoxContainer/HSplitContainer/Left"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 0.823529)
+theme_override_font_sizes/font_size = 24
+theme_override_styles/panel = SubResource("StyleBoxFlat_2f865")
+fixed_icon_size = Vector2i(24, 24)
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/HSplitContainer"]
 layout_mode = 2
@@ -93,12 +101,6 @@ layout_mode = 2
 editable = false
 wrap_mode = 1
 autowrap_mode = 1
-
-[node name="PanelContainer" type="PanelContainer" parent="VBoxContainer"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="VBoxContainer/PanelContainer"]
-layout_mode = 2
 
 [node name="OpenFileDialog" type="FileDialog" parent="."]
 unique_name_in_owner = true

@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://dnraxiba0h5af"]
+
+[ext_resource type="Script" path="res://test/test.gd" id="1_vbtgt"]
+
+[node name="Test" type="Node2D"]
+script = ExtResource("1_vbtgt")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+offset_left = 68.0
+offset_top = 56.0
+offset_right = 108.0
+offset_bottom = 96.0

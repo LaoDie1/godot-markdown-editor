@@ -14,6 +14,8 @@ signal selected(line_item: LineItem)
 
 
 @onready var text_edit : TextEdit = %TextEdit
+@onready var image_request: HTTPRequest = %ImageRequest
+
 
 static var instance : DocumentCanvas
 
@@ -128,14 +130,14 @@ func open_file(path: String) -> void:
 
 ## 初始化所有行
 func init_lines(lines: Array) -> void:
+	LineItem.reset_incr_id()
+	
 	_origin_text = ""
 	for line in lines:
 		_origin_text += line
-	
-	LineItem.reset_incr_id()
+	text_edit.visible = false
 	_selected_line_item = null
 	line_items.clear()
-	text_edit.hide()
 	
 	if lines.is_empty():
 		lines.append("")
@@ -218,18 +220,19 @@ func _update_line_after_pos(item_idx: int, offset: float):
 
 # 编辑行
 func _edit_line(item: LineItem):
+	text_edit.text = item.origin_text.substr(0, item.origin_text.length())
 	text_edit.visible = true
 	text_edit.custom_minimum_size.x = get_width() + 4
 	text_edit.custom_minimum_size.y = item.get_height(get_width())
-	text_edit.text = item.origin_text.substr(0, item.origin_text.length())
 	text_edit.get_parent_control().position = Vector2(0, item.line_y_point + 1) # 设置位置
 	
 	text_edit.add_theme_font_size_override("font_size", item.font_size)
 	text_edit.add_theme_font_override("font", item.font)
 	
-	text_edit.grab_focus()
 	var v = text_edit.get_line_column_at_pos( text_edit.get_local_mouse_pos() , false)
 	text_edit.set_caret_column(v.x)
+	text_edit.grab_focus()
+	text_edit.clear_undo_history()
 	
 	self.selected.emit(item)
 
@@ -257,11 +260,8 @@ func _delete_line(line_idx:  int) -> void:
 			var last_caret_column = last_line_item.text.length()
 			last_line_item.origin_text += line_item.text
 			last_line_item.handle_md()
-			Engine.get_main_loop().create_timer(0.01).timeout.connect(
-				text_edit.set_caret_column.bind(last_caret_column),
-				Object.CONNECT_ONE_SHOT
-			)
-		
+			FuncUtil.timeout(0.01, text_edit.set_caret_column.bind(last_caret_column))
+			
 		_update_line_after_pos(line_idx, -line_item.get_height(get_width()))
 
 
@@ -355,3 +355,8 @@ func _on_text_edit_resized():
 
 func _on_text_edit_focus_exited():
 	_update_selected_line(true)
+
+
+func _on_image_request_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
+	pass # Replace with function body.
+	
