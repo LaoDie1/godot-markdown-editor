@@ -14,7 +14,7 @@ static var _object_script_to_propertys : Dictionary = {}
 
 ##  根据字典数据设置对象所有属性
 static func set_property_by_dict(dict: Dictionary, object: Object) -> void:
-	if dict.size() > 0 and object:
+	if not dict.is_empty() and object:
 		for property in dict:
 			# 对象存在这个属性则设置
 			if property in object:

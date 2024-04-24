@@ -7,46 +7,6 @@
 class_name ScriptUtil
 
 
-const DATA_TYPE_TO_NAME = {
-	TYPE_NIL: &"null",
-	TYPE_BOOL: &"bool",
-	TYPE_INT: &"int",
-	TYPE_FLOAT: &"float",
-	TYPE_STRING: &"String",
-	TYPE_RECT2: &"Rect2",
-	TYPE_VECTOR2: &"Vector2",
-	TYPE_VECTOR2I: &"Vector2i",
-	TYPE_VECTOR3: &"Vector3",
-	TYPE_VECTOR3I: &"Vector3i",
-	TYPE_TRANSFORM2D: &"Transform2D",
-	TYPE_VECTOR4: &"Vector4",
-	TYPE_VECTOR4I: &"Vector4i",
-	TYPE_PLANE: &"Plane",
-	TYPE_QUATERNION: &"Quaternion",
-	TYPE_AABB: &"AABB",
-	TYPE_BASIS: &"Basis",
-	TYPE_TRANSFORM3D: &"Transform3D",
-	TYPE_PROJECTION: &"Projection",
-	TYPE_COLOR: &"Color",
-	TYPE_STRING_NAME: &"StringName",
-	TYPE_NODE_PATH: &"NodePath",
-	TYPE_RID: &"RID",
-	TYPE_OBJECT: &"Object",
-	TYPE_CALLABLE: &"Callable",
-	TYPE_SIGNAL: &"Signal",
-	TYPE_DICTIONARY: &"Dictionary",
-	TYPE_ARRAY: &"Array",
-	TYPE_PACKED_BYTE_ARRAY: &"PackedByteArray",
-	TYPE_PACKED_INT32_ARRAY: &"PackedInt32Array",
-	TYPE_PACKED_INT64_ARRAY: &"PackedInt64Array",
-	TYPE_PACKED_STRING_ARRAY: &"PackedStringArray",
-	TYPE_PACKED_VECTOR2_ARRAY: &"PackedVector2Array",
-	TYPE_PACKED_VECTOR3_ARRAY: &"PackedVector3Array",
-	TYPE_PACKED_FLOAT32_ARRAY: &"PackedFloat32Array",
-	TYPE_PACKED_FLOAT64_ARRAY: &"PackedFloat64Array",
-	TYPE_PACKED_COLOR_ARRAY: &"PackedColorArray",
-}
-
 const NAME_TO_DATA_TYPE = {
 	&"null": TYPE_NIL,
 	&"bool": TYPE_BOOL,
@@ -114,20 +74,9 @@ static func _get_value_or_set(dict: Dictionary, key, not_exists_set: Callable = 
 			dict[key] = not_exists_set.call()
 			return dict[key]
 
-
-##  数据类型名称
-##[br] - [code]type[/code]  数据类型枚举值
-##[br] - [code]return[/code]  返回数据类型的字符串
-static func get_type_name(type: int) -> StringName:
-	return DATA_TYPE_TO_NAME.get(type)
-
 ## 获取这个类名的类型
 static func get_type_of(_class_name: StringName) -> int:
 	return NAME_TO_DATA_TYPE.get(_class_name, -1)
-
-## 是否有这个类型的枚举
-static func has_type(type: int) -> bool:
-	return DATA_TYPE_TO_NAME.has(type)
 
 ## 是否是基础数据类型
 static func is_base_data_type(_class_name: StringName) -> bool:
@@ -276,7 +225,7 @@ static func generate_method_code(method_data: Dictionary) -> String:
 	var args := ""
 	for i in temp['args']:
 		var arg_name = i['name']
-		var arg_type = ( get_type_name(i['type']) if i['type'] != TYPE_NIL else "")
+		var arg_type = ( type_string(i['type']) if i['type'] != TYPE_NIL else "")
 		if arg_type.strip_edges() == "":
 			arg_type = str(i['class_name'])
 		if arg_type.strip_edges() != "":
@@ -284,7 +233,7 @@ static func generate_method_code(method_data: Dictionary) -> String:
 		args += "%s%s, " % [arg_name, arg_type]
 	temp['args'] = args.trim_suffix(", ")
 	if temp['return']['type'] != TYPE_NIL:
-		temp['return_type'] = get_type_name(temp['return']['type'])
+		temp['return_type'] = type_string(temp['return']['type'])
 	
 	if temp.has('return_type') and temp['return_type'] != "":
 		temp['return_type'] = " -> " + str(temp['return_type'])
@@ -497,7 +446,7 @@ static func get_class_name(value, cache: bool = true) -> StringName:
 				return value.get_class()
 			
 	else:
-		return get_type_name(typeof(value))
+		return type_string(typeof(value))
 
 
 ## 获取这个类名称的实例对象

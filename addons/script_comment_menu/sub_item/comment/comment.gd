@@ -74,9 +74,9 @@ func _func_comment():
 			if data['args'].size() > 0:
 				code += (indent + "##[br]\n")
 				for arg in data['args']:
-					code += (indent + "##[br][kbd]%s[/kbd]  \n" % arg['name'])
+					code += (indent + "##[br]- [code]%s[/code]  \n" % arg['name'])
 			if data['return']['type'] != TYPE_NIL:
-				code += (indent + "##[br][kbd]return[/kbd]  ")
+				code += (indent + "##[br]- [code]return[/code]  ")
 			code = code.trim_suffix("\n")
 			util_script_editor.insert_code_current_pos(code, true)
 			break

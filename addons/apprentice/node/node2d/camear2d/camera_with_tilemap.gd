@@ -16,13 +16,13 @@ extends BaseCameraDecorator
 		update_configuration_warnings()
 		update_camera()
 
-var __readied = FuncUtil.execute(func():
+var __readied = FuncUtil.execute_deferred(func():
 	await Engine.get_main_loop().process_frame
 	Engine.get_main_loop() \
 		.root.size_changed \
 		.connect(update_camera)
 	update_camera()
-, true)
+)
 
 
 #============================================================

@@ -123,7 +123,7 @@ static func get_class_info(_class) -> _ClassInfo:
 			script =  _class
 		elif _class is int and _class > 0 and _class < TYPE_MAX:
 			type = _class
-			_class = ScriptUtil.get_type_name(_class)
+			_class = type_string(_class)
 		elif _class is Object:
 			var _class_type_ = str(_class)
 			if _class_type_.contains("GDScriptNativeClass"):

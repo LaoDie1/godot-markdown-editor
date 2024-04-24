@@ -7,23 +7,11 @@
 class_name EditorUtil
 
 
-##  获取编辑器接口
-static func get_editor_interface():
-	return DataUtil.singleton("EditorUtil_editor_interface", func(): 
-		var scene = Engine.get_main_loop().root.get_child(0) as Node
-		var children = scene.get_children()
-		children.reverse()
-		for node in children:
-			if node.get_class() == "EditorPlugin":
-				return node.call("get_editor_interface")
-		return null
-	)
-
 ##  获取启用的自定义插件节点列表
 ##[br][code]return[/code]  
 static func get_custom_editor_plugin() -> Array[EditorPlugin]:
 	var list : Array[EditorPlugin] = []
-	for node in get_editor_interface() \
+	for node in EditorInterface \
 		.get_base_control() \
 		.get_parent() \
 		.get_parent() \
@@ -35,7 +23,7 @@ static func get_custom_editor_plugin() -> Array[EditorPlugin]:
 ## 获取内置编辑器的插件节点列表
 static func get_standard_editor_plugin() -> Array[EditorPlugin]:
 	var list : Array[EditorPlugin] = []
-	for node in get_editor_interface() \
+	for node in EditorInterface \
 		.get_base_control() \
 		.get_parent() \
 		.get_parent() \
@@ -46,10 +34,10 @@ static func get_standard_editor_plugin() -> Array[EditorPlugin]:
 
 ## 获取编辑器根节点
 static func get_editor_root() -> Viewport:
-	return get_editor_interface().get_viewport()
+	return EditorInterface.get_base_control().get_viewport()
 
 static func get_base_control() -> Control:
-	return get_editor_interface().get_base_control()
+	return EditorInterface.get_base_control()
 
 ##  获取编辑器主题图标
 ##[br]
@@ -57,7 +45,7 @@ static func get_base_control() -> Control:
 ##[br]
 ##[br][code]return[/code]  返回这个图标
 static func get_editor_theme_icon(name: StringName) -> Texture2D:
-	return get_editor_interface() \
+	return EditorInterface \
 		.get_base_control() \
 		.get_theme_icon(name, "EditorIcons")
 
@@ -98,7 +86,7 @@ static func get_editor_first_node_by_class(_class_name: StringName) -> Node:
 ##[br]
 ##[br][code]return[/code]  返回选中的节点列表
 static func get_selected_nodes() -> Array[Node]:
-	return get_editor_interface().get_selection().get_selected_nodes()
+	return EditorInterface.get_selection().get_selected_nodes()
 
 
 ## 获取选中的第一个节点
@@ -115,12 +103,12 @@ static func get_selected_first_node() -> Node:
 ##[br]
 ##[br][code]return[/code]  返回这个编辑器文件系统目录
 static func get_filesystem_path(path: String) -> EditorFileSystemDirectory:
-	return get_editor_interface().get_resource_filesystem().get_filesystem_path(path)
+	return EditorInterface.get_resource_filesystem().get_filesystem_path(path)
 
 
 ## 获取当前选中的文件所在目录，如果没有选中，则返回空字符串
 static func get_selected_dir():
-	var list = get_editor_interface().get_selected_paths()
+	var list = EditorInterface.get_selected_paths()
 	if len(list) > 0:
 		var path = list[0] as String
 		if DirAccess.dir_exists_absolute(path):
@@ -132,16 +120,16 @@ static func get_selected_dir():
 
 ## 获取正在编辑的场景根节点
 static func get_edited_scene_root() -> Node:
-	return get_editor_interface().get_edited_scene_root()
+	return EditorInterface.get_edited_scene_root()
 
 
 ## 设置场景根节点
 static func set_edited_scene_root(node: Node) -> void:
 	var scene = PackedScene.new()
 	scene.pack(node)
-	get_editor_interface().edit_resource(scene)
-	get_editor_interface().get_selection().add_node(node)
-	get_editor_interface().edit_node(node)
+	EditorInterface.edit_resource(scene)
+	EditorInterface.get_selection().add_node(node)
+	EditorInterface.edit_node(node)
 
 
 ##  获取当前编辑器的编辑视图名称（2D、3D、Script、AssetLib），如果没有这几个，则返回空字符串
@@ -165,7 +153,7 @@ static func get_current_main_screen_name() -> String:
 	
 	if class_to_node_map.ScriptEditor == null:
 		# 扫描子节点
-		var main_screen = get_editor_interface().get_editor_main_screen()
+		var main_screen = EditorInterface.get_editor_main_screen()
 		for child in main_screen.get_children():
 			var class_ = child.get_class()
 			if class_to_node_map.has(class_):
@@ -210,9 +198,9 @@ static func get_plugin_name(plugin: EditorPlugin) -> StringName:
 static func reload_plugin(plugin: EditorPlugin) -> void:
 	if plugin != null:
 		var plugin_name = get_plugin_name(plugin)
-		var editor_interface = get_editor_interface()
+		var editor_interface = EditorInterface
 		editor_interface.set_plugin_enabled(plugin_name, false)
-		await get_editor_interface().get_tree().create_timer(0.1).timeout
+		await Engine.get_main_loop().create_timer(0.1).timeout
 		editor_interface.set_plugin_enabled(plugin_name, true)
 		print("已重新加载 ", plugin_name, " 插件")
 	else:
@@ -223,7 +211,7 @@ static func reload_plugin(plugin: EditorPlugin) -> void:
 ##[br]
 ##[br][code]path[/code]  要定位的路径
 static func navigate_to_path(path: String) -> void:
-	get_editor_interface().get_file_system_dock().navigate_to_path(path)
+	EditorInterface.get_file_system_dock().navigate_to_path(path)
 
 
 ## 获取创建场景根节点的按钮
@@ -250,7 +238,7 @@ static func get_create_new_node_dialog() -> Window:
 
 ##  获取文件系统的鼠标菜单
 static func get_file_system_dock_menu() -> PopupMenu:
-	var file_dock = get_editor_interface().get_file_system_dock()
+	var file_dock = EditorInterface.get_file_system_dock()
 	return file_dock.get_child(2) as PopupMenu
 
 
@@ -264,7 +252,7 @@ static func get_3d_editor() -> Control:
 
 ## 获取属性检查器
 static func get_inspector_dock() -> EditorInspector:
-	return get_editor_interface().get_inspector()
+	return EditorInterface.get_inspector()
 
 
 ##  添加2D编辑器工具按钮
@@ -285,7 +273,7 @@ static func add_2d_editor_tool_button(button: BaseButton):
 
 ##  获取当前脚本编辑器
 static func get_script_editor() -> ScriptEditor:
-	return get_editor_interface().get_script_editor()
+	return EditorInterface.get_script_editor()
 
 ## 获取前编辑的脚本
 static func get_current_script() -> Script:
@@ -343,22 +331,22 @@ class _PreviewTexture:
 ##[br][code]res_path[/code]  资源路径
 ##[br][code]callback[/code]  图片回调方法。这个方法需要有 preview （[Texture2D] 类型），thumbnail_preview （[Texture2D] 类型）两个参数
 static func get_res_preview_texture(res_path: String, callback: Callable) -> void:
-	var previewer = get_editor_interface().get_resource_previewer() as EditorResourcePreview
+	var previewer = EditorInterface.get_resource_previewer() as EditorResourcePreview
 	previewer.queue_resource_preview(res_path, _PreviewTexture, "_preview", callback)
 
 
 ## 获取编辑器属性
 static func get_editor_setting_property(property: String):
-	return get_editor_interface().get_editor_settings().get(property)
+	return EditorInterface.get_editor_settings().get(property)
 
 ## 设置编辑器属性
 static func set_editor_setting_property(property: String, value) -> void:
-	get_editor_interface().get_editor_settings().set(property, value)
+	EditorInterface.get_editor_settings().set(property, value)
 
 
 ## 设置编辑器当前的显示的场景。比如默认的：2D, 3D, Script, AssetLib
 static func set_main_screen_editor(name: StringName) -> void:
-	get_editor_interface().set_main_screen_editor(name)
+	EditorInterface.set_main_screen_editor(name)
 
 
 ##  获取场景包的根节点的属性
@@ -408,7 +396,7 @@ static func get_scene_data(scene: PackedScene) -> Dictionary:
 
 ## 获取当前编辑器的地区语言
 static func get_editor_language() -> String:
-	return get_editor_interface() \
+	return EditorInterface \
 		.get_editor_settings() \
 		.get('interface/editor/editor_language')
 
@@ -418,7 +406,7 @@ static func get_editor_language() -> String:
 ##[br][code]popup[/code]  菜单节点
 ##[br][code]menu_name[/code]  菜单名称，如果没有，则默认按照节点名称
 static func add_editor_menu(popup: PopupMenu, menu_name: String = "") -> void:
-	var panel = get_editor_interface().get_base_control()
+	var panel = EditorInterface.get_base_control()
 	var base_container = panel.get_child(0)
 	var editor_tile_bar = base_container.get_child(0)
 	var editor_menu_bar = editor_tile_bar.get_child(0) as MenuBar
@@ -432,7 +420,7 @@ static func add_editor_menu(popup: PopupMenu, menu_name: String = "") -> void:
 ##[br][code]idx[/code]  菜单索引
 ##[br][code]return[/code]  返回这个节点
 static func get_editor_menu(idx: int) -> PopupMenu:
-	var panel = get_editor_interface().get_base_control()
+	var panel = EditorInterface.get_base_control()
 	var base_container = panel.get_child(0)
 	var editor_tile_bar = base_container.get_child(0)
 	var editor_menu_bar = editor_tile_bar.get_child(0) as MenuBar
@@ -451,7 +439,7 @@ static func get_editor_menu(idx: int) -> PopupMenu:
 ##[br][code]idx[/code]  
 ##[br][code]return[/code]  
 static func get_main_screen_button(idx: int) -> Button:
-	var panel = get_editor_interface().get_base_control()
+	var panel = EditorInterface.get_base_control()
 	var base_container = panel.get_child(0)
 #	var editor_tile_bar = get_editor_node_by_class("EditorTitleBar").front()
 	var editor_tile_bar = base_container.get_child(0)
@@ -472,7 +460,7 @@ static func get_scene_tree_dock() -> Control:
 
 ## 获取文件系统的 dock
 static func get_file_system_dock() -> FileSystemDock:
-	return get_editor_interface().get_file_system_dock()
+	return EditorInterface.get_file_system_dock()
 
 
 ## 是否在编辑器当中。详细请参阅：https://docs.godotengine.org/en/4.0/tutorials/export/feature_tags.html
@@ -487,5 +475,5 @@ static func is_editor() -> bool:
 
 ## 扫描文件
 static func scan_files():
-	get_editor_interface().get_resource_filesystem().scan()
-	get_editor_interface().get_resource_filesystem().scan_sources()
+	EditorInterface.get_resource_filesystem().scan()
+	EditorInterface.get_resource_filesystem().scan_sources()
