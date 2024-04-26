@@ -9,8 +9,8 @@
 class_name Document
 
 
-## 分组间距
-const GROUP_SPACING = 300
+## 页面高度
+const PAGE_HEIGHT = 300
 
 
 ## 文档最大宽度
@@ -21,7 +21,7 @@ var _file_path: String
 var _line_items: Array[LineItem]
 var _first_line : LineItem
 var _doc_height : int = 0
-var _line_group : Dictionary = {}
+var _page_first_line : Dictionary = {} # 分页，每页第一个行
 
 
 #============================================================
@@ -66,13 +66,13 @@ func get_doc_height():
 
 ## 设置这个位置的组的行
 func set_group_line(y: float, line: LineItem):
-	var i : int = ceili(y / GROUP_SPACING)
-	if not _line_group.has(i):
-		_line_group[i] = line
+	var i : int = ceili(y / PAGE_HEIGHT)
+	if not _page_first_line.has(i):
+		_page_first_line[i] = line
 
 func get_group_line(y) -> LineItem:
-	var i : int = int(y / GROUP_SPACING)
-	return _line_group.get(i)
+	var i : int = int(y / PAGE_HEIGHT)
+	return _page_first_line.get(i)
 
 ## 获取位置上的行
 func get_line_by_point(point: Vector2) -> LineItem:
@@ -192,7 +192,6 @@ func insert_before(from_line: LineItem, text: String = "") -> LineItem:
 	return new_line
 
 
-const TEMPLATE = "%-5d %-10d %-10d %s"
 ## 增加文档高度
 func add_doc_height(line_item: LineItem):
 	_doc_height += line_item.get_line_height() + Config.line_spacing
@@ -200,12 +199,9 @@ func add_doc_height(line_item: LineItem):
 
 ## 计算文档高度
 func update_doc_height():
-	_line_group.clear()
+	_page_first_line.clear()
 	_doc_height = 0
 	if _first_line != null:
-		#print("=".repeat(50))
-		#print(TEMPLATE.replace("d", "s") % ["id", "height", "y axis", "text"])
-		
 		add_doc_height(_first_line)
 		set_group_line(0, _first_line)
 		_first_line.for_next(
