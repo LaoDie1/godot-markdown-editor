@@ -47,11 +47,12 @@ var margin : Margin = Margin.new()
 ## 字体
 var font : Font
 
+## 文字数据块 # TODO 后续绘制时如果为空，则懒加载数据块
+var blocks : Array[Block] = []
+
 
 # 空白缩进
 var _indent : int = 0
-# 文字数据块
-var _blocks : Array = []
 # 计算好的高度缓存
 var _line_height : int = 0: # 需要在 handle 中预先计算好
 	set(v):
@@ -228,6 +229,7 @@ func handle_markdown(width: int) -> void:
 			margin.left = 24
 		LineType.Code:
 			margin.top = 8
+			margin.left = 2
 			margin.bottom = 8
 			
 			text = ""
@@ -256,8 +258,6 @@ func handle_markdown(width: int) -> void:
 	
 	# 行高
 	_line_height = get_text_height( width )
-	if _line_height == 0:
-		_line_height = get_height_of_one_line()
 
 
 # 处理图片 URL。这个 [code]callback[/code] 回调方法需要有一个 [Image] 类型的参数接收返回的图片 
@@ -287,6 +287,8 @@ func _handle_image_url(url: String, callback: Callable):
 ##[br]- [code]width[/code]  整体宽度
 func draw_to(canvas: CanvasItem, width: int):
 	var line_rect : Rect2 = get_rect(width)
+	line_rect.position.x += 1
+	line_rect.size.x -= 1
 	match type:
 		LineType.Quote:
 			# 面板
@@ -318,6 +320,13 @@ func draw_to(canvas: CanvasItem, width: int):
 				var content_rect = get_content_rect(width)
 				canvas.draw_texture(_image, content_rect.position)
 				return
+	
+	# TODO 懒加载
+	#if blocks.is_empty() and type != LineType.Code:
+		#blocks = BlockType.handle_block(text)
+		
+		#var items = blocks.map(func(block: Block): return block.format_code(0))
+		#print(items) # 输出测试
 	
 	if text:
 		var content_rect = get_content_rect(width)

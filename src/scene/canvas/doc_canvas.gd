@@ -5,12 +5,30 @@
 # - datetime: 2024-04-26 11:54:13
 # - version: 4.3.0.dev5
 #============================================================
+## 文档的画布对象
 class_name DocCanvas
 extends Control
 
 
+## 点击文档中的行
+signal clicked_line(line: LineItem)
+
+
+## 绘制的文件路径
+@export_global_file("*.md;Markdown File") var file_path: String:
+	set(v):
+		file_path = v
+		if not is_inside_tree():
+			await tree_entered
+		load_file(file_path)
+@export var vertical_offset : float:
+	set(v):
+		if vertical_offset != v:
+			vertical_offset = v
+			queue_redraw()
+
+## 文档对象
 var document: Document
-var cliecked_rect: Rect2 = Rect2()
 
 
 #============================================================
@@ -18,9 +36,7 @@ var cliecked_rect: Rect2 = Rect2()
 #============================================================
 func _draw() -> void:
 	if document:
-		document.draw(self, 0, size.y)
-		draw_rect(cliecked_rect, Color.RED, false, 2)
-
+		document.draw(self, vertical_offset, get_height())
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -28,8 +44,8 @@ func _gui_input(event: InputEvent) -> void:
 			if document:
 				var line : LineItem = document.get_line_by_point(get_local_mouse_position())
 				if line:
-					cliecked_rect = line.get_rect(get_width())
-					queue_redraw()
+					clicked_line.emit(line)
+
 
 
 #============================================================
@@ -38,15 +54,26 @@ func _gui_input(event: InputEvent) -> void:
 func get_width():
 	return size.x
 
-func load_file(file_path: String):
+func get_height():
+	return size.y
+
+
+## 加载显示的文件
+func load_file(file_path: String) -> void:
+	if not FileAccess.file_exists(file_path):
+		printerr("文件不存在：", file_path)
+		return
+	
 	if get_width() == 0:
 		await Engine.get_main_loop().process_frame
 	
 	document = Document.new(get_width(), file_path)
 	document.update_doc_height()
-	#size.y = 0
-	#custom_minimum_size.y = document.get_doc_height()
+	
+	# 绘制
 	queue_redraw()
-	force_update_transform() # 立即刷新
+	# 立即刷新
+	force_update_transform()
+
 
 

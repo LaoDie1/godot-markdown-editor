@@ -1,13 +1,13 @@
 [gd_scene load_steps=8 format=3 uid="uid://bi6uhrh1qr7e5"]
 
-[ext_resource type="Script" path="res://src/scene/canvas/document_canvas.gd" id="1_q8bgb"]
+[ext_resource type="Script" path="res://test/canvas/document_canvas.gd" id="1_q8bgb"]
 
 [sub_resource type="FontVariation" id="FontVariation_ebmto"]
 
 [sub_resource type="Theme" id="Theme_5syx7"]
 default_font = SubResource("FontVariation_ebmto")
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tqggp"]
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_rurt2"]
 
 [sub_resource type="Theme" id="Theme_86keu"]
 HScrollBar/icons/decrement = null
@@ -16,22 +16,22 @@ HScrollBar/icons/decrement_pressed = null
 HScrollBar/icons/increment = null
 HScrollBar/icons/increment_highlight = null
 HScrollBar/icons/increment_pressed = null
-HScrollBar/styles/grabber = SubResource("StyleBoxEmpty_tqggp")
-HScrollBar/styles/grabber_highlight = SubResource("StyleBoxEmpty_tqggp")
-HScrollBar/styles/grabber_pressed = SubResource("StyleBoxEmpty_tqggp")
-HScrollBar/styles/scroll = SubResource("StyleBoxEmpty_tqggp")
-HScrollBar/styles/scroll_focus = SubResource("StyleBoxEmpty_tqggp")
+HScrollBar/styles/grabber = SubResource("StyleBoxEmpty_rurt2")
+HScrollBar/styles/grabber_highlight = SubResource("StyleBoxEmpty_rurt2")
+HScrollBar/styles/grabber_pressed = SubResource("StyleBoxEmpty_rurt2")
+HScrollBar/styles/scroll = SubResource("StyleBoxEmpty_rurt2")
+HScrollBar/styles/scroll_focus = SubResource("StyleBoxEmpty_rurt2")
 VScrollBar/icons/decrement = null
 VScrollBar/icons/decrement_highlight = null
 VScrollBar/icons/decrement_pressed = null
 VScrollBar/icons/increment = null
 VScrollBar/icons/increment_highlight = null
 VScrollBar/icons/increment_pressed = null
-VScrollBar/styles/grabber = SubResource("StyleBoxEmpty_tqggp")
-VScrollBar/styles/grabber_highlight = SubResource("StyleBoxEmpty_tqggp")
-VScrollBar/styles/grabber_pressed = SubResource("StyleBoxEmpty_tqggp")
-VScrollBar/styles/scroll = SubResource("StyleBoxEmpty_tqggp")
-VScrollBar/styles/scroll_focus = SubResource("StyleBoxEmpty_tqggp")
+VScrollBar/styles/grabber = SubResource("StyleBoxEmpty_rurt2")
+VScrollBar/styles/grabber_highlight = SubResource("StyleBoxEmpty_rurt2")
+VScrollBar/styles/grabber_pressed = SubResource("StyleBoxEmpty_rurt2")
+VScrollBar/styles/scroll = SubResource("StyleBoxEmpty_rurt2")
+VScrollBar/styles/scroll_focus = SubResource("StyleBoxEmpty_rurt2")
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_al0ie"]
 content_margin_left = 8.0

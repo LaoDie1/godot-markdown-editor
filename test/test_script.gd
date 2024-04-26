@@ -1,17 +1,16 @@
 #============================================================
-#    Block Type
+#    Test Script
 #============================================================
 # - author: zhangxuetu
-# - datetime: 2024-04-26 03:33:57
+# - datetime: 2024-04-26 19:01:19
 # - version: 4.3.0.dev5
 #============================================================
-## 每个行的每个块
-class_name BlockType
+@tool
+extends EditorScript
 
 
-enum {
-	TEXT,
-	IMAGE,
-	URL,
-}
-
+func _run() -> void:
+	var text = "hello world"
+	var bytes = text.to_utf8_buffer()
+	print(bytes[0] == KEY_H)
+	

@@ -115,9 +115,9 @@ func get_line(idx: int) -> LineItem:
 ## 初始化所有行
 func init_lines(string_lines: Array) -> void:
 	LineItem.reset_incr_id()
-	# 处理每行数据的方式
 	var file_type = _file_path.get_extension().to_lower()
 	if file_type == "md":
+		# 处理 Markdown 文档
 		_convert_strings(string_lines)
 	else:
 		for line in string_lines:
@@ -214,22 +214,31 @@ func update_doc_height():
 
 
 ## 绘制到画布。需要在 canvas 节点的 [method CanvasItem._draw] 中调用这个方法
+##[br]
+##[br]根据传入的 [param offset_y] 和 [param max_height] 参数绘制一块的区域内显示的内容
+##大大减少资源的消耗 
+##[br]
+##[br]
+##[br]- [code]canvas[/code]  绘制到的目标对象
+##[br]- [code]offset_y[/code]  绘制到画布的偏移的位置
+##[br]- [code]max_height[/code]  绘制的最大高度
 func draw(canvas: CanvasItem, offset_y: int, max_height: int):
 	if _first_line == null:
-		return 0
+		return 
 	
 	# 绘制的节点位置
 	var current_line = get_line_by_point(Vector2(0, offset_y))
+	if not current_line:
+		return
 	if current_line.previous_line != null:
 		current_line = current_line.previous_line
 	
 	# 开始绘制
 	var max_offset : int = offset_y + max_height
 	current_line.draw_to(canvas, max_width)
-	var end_line : LineItem = current_line.find_next(
+	current_line.find_next(
 		func(line: LineItem):
 			if line.line_y_point >= max_offset:
 				return true
 			line.draw_to(canvas, max_width)
 	)
-	
