@@ -72,6 +72,8 @@ func set_group_line(y: float, line: LineItem):
 
 func get_group_line(y) -> LineItem:
 	var i : int = int(y / PAGE_HEIGHT)
+	while not _page_first_line.has(i):
+		i -= 1
 	return _page_first_line.get(i)
 
 ## 获取位置上的行

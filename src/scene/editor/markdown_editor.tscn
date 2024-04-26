@@ -137,8 +137,9 @@ offset_left = 1126.0
 offset_top = 15.0
 offset_right = 1135.0
 offset_bottom = 805.0
-step = 20.0
+step = 50.0
 page = 100.0
+custom_step = 50.0
 
 [connection signal="clicked_line" from="Control/DocCanvas" to="Debug" method="show_debug"]
 [connection signal="scrolling" from="VScrollBar" to="." method="_on_v_scroll_bar_scrolling"]
