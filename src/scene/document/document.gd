@@ -12,6 +12,7 @@ class_name Document
 ## 分组间距
 const GROUP_SPACING = 300
 
+
 ## 文档最大宽度
 var max_width : int = -1
 
@@ -26,8 +27,11 @@ var _line_group : Dictionary = {}
 #============================================================
 #  内置
 #============================================================
-func _init(file_path: String) -> void:
+func _init(max_width: int, file_path: String) -> void:
 	self._file_path = file_path
+	self.max_width = max_width
+	assert(max_width > 0, "文档宽度大小必须超过 0！")
+	
 	init_lines(FileUtil.read_as_lines(file_path))
 
 
@@ -59,6 +63,8 @@ func get_text() -> String:
 func get_doc_height():
 	return _doc_height
 
+
+## 设置这个位置的组的行
 func set_group_line(y: float, line: LineItem):
 	var i : int = ceili(y / GROUP_SPACING)
 	if not _line_group.has(i):
@@ -72,8 +78,8 @@ func get_group_line(y) -> LineItem:
 func get_line_by_point(point: Vector2) -> LineItem:
 	var start_line : LineItem = get_group_line(point.y)
 	if start_line:
-		var last_line = [null]
-		var mouse_line = start_line.find_next(
+		var last_line = [null] # 必须用引用类型的数据，否则匿名函数中会赋值不上
+		var mouse_line : LineItem = start_line.find_next(
 			func(line: LineItem):
 				last_line[0] = line
 				# 在鼠标位置范围内
@@ -82,7 +88,7 @@ func get_line_by_point(point: Vector2) -> LineItem:
 				):
 					return true
 		)
-		if mouse_line != null:
+		if mouse_line:
 			return mouse_line.previous_line
 		else:
 			if last_line[0]:
@@ -90,7 +96,8 @@ func get_line_by_point(point: Vector2) -> LineItem:
 			return start_line
 	return null
 
-## 获取这一行
+
+## 获取行
 func get_line(idx: int) -> LineItem:
 	assert(idx >= 0, "行索引值必须超过 0")
 	var i = 0
@@ -184,24 +191,20 @@ func insert_before(from_line: LineItem, text: String = "") -> LineItem:
 	
 	return new_line
 
+
 const TEMPLATE = "%-5d %-10d %-10d %s"
 ## 增加文档高度
 func add_doc_height(line_item: LineItem):
 	_doc_height += line_item.get_line_height() + Config.line_spacing
-	print(TEMPLATE % [
-		line_item.id, 
-		line_item.get_line_height(),
-		line_item.line_y_point,
-		line_item.origin_text,
-	])
+
 
 ## 计算文档高度
 func update_doc_height():
 	_line_group.clear()
 	_doc_height = 0
 	if _first_line != null:
-		print("=".repeat(50))
-		print(TEMPLATE.replace("d", "s") % ["id", "height", "y axis", "text"])
+		#print("=".repeat(50))
+		#print(TEMPLATE.replace("d", "s") % ["id", "height", "y axis", "text"])
 		
 		add_doc_height(_first_line)
 		set_group_line(0, _first_line)
@@ -212,19 +215,25 @@ func update_doc_height():
 				# 向下偏移文档位置
 				add_doc_height(line)
 		)
-		
 
 
 ## 绘制到画布。需要在 canvas 节点的 [method CanvasItem._draw] 中调用这个方法
-func draw(canvas: CanvasItem):
+func draw(canvas: CanvasItem, offset_y: int, max_height: int):
 	if _first_line == null:
 		return 0
-	_first_line.draw_to(canvas, max_width)
-	var last_line : LineItem = _first_line
-	_first_line.find_next(
+	
+	# 绘制的节点位置
+	var current_line = get_line_by_point(Vector2(0, offset_y))
+	if current_line.previous_line != null:
+		current_line = current_line.previous_line
+	
+	# 开始绘制
+	var max_offset : int = offset_y + max_height
+	current_line.draw_to(canvas, max_width)
+	var end_line : LineItem = current_line.find_next(
 		func(line: LineItem):
-			last_line = line
-			# TODO 如果位置超出了节点的高度，则不再绘制
+			if line.line_y_point >= max_offset:
+				return true
 			line.draw_to(canvas, max_width)
 	)
-
+	

@@ -15,7 +15,8 @@ static var document : Document
 
 
 func _ready() -> void:
-	var file_path = "res://test/SimpleTest.md"
+	#var file_path = "res://test/SimpleTest.md"
+	var file_path = r"D:\直播\抖音短视频的推荐机制（或者说算法）是怎样的？.md"
 	doc_canvas.load_file(file_path)
 
 

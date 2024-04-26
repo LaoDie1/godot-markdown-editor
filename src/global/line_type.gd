@@ -11,6 +11,8 @@ class_name LineType
 
 # 行类型
 enum {
+	Error = -1, ## 错误的行类型
+	
 	Normal = 0, ## 普通行
 	UnorderedList = 10001, ## 无序列表
 	SerialNumber, ## 序号

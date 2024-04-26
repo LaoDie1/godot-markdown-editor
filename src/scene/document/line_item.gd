@@ -8,13 +8,12 @@
 class_name LineItem
 
 
-signal height_changed
+signal line_height_changed
 
 
 ## 绘制的文字断行方式
 const TEXT_BREAK_MODE : int = (
 	TextServer.BREAK_MANDATORY 
-	| TextServer.BREAK_ADAPTIVE 
 	| TextServer.BREAK_GRAPHEME_BOUND
 )
 
@@ -34,7 +33,7 @@ var origin_text : String = ""
 ## 显示出来的字符串
 var text : String = ""
 ## 行类型
-var type : int = LineType.Normal
+var type : int = LineType.Error
 ## 画布所在的 y 轴点
 var line_y_point : int = 0
 ## 文本对齐方式
@@ -53,10 +52,16 @@ var font : Font
 var _indent : int = 0
 # 文字数据块
 var _blocks : Array = []
-# 预先计算好的高度
-var _line_height : int = 0 # 需要在 handle 中预先计算好
-var _image : Texture2D
+# 计算好的高度缓存
+var _line_height : int = 0: # 需要在 handle 中预先计算好
+	set(v):
+		if v != 0 and _line_height != v:
+			_line_height = v
+			line_height_changed.emit()
 
+# 当前标签图片
+var _image : Texture2D
+var _last_width : int = -1
 
 
 #============================================================
@@ -135,6 +140,7 @@ func get_line_height() -> int:
 
 ## 获取当前字符串总高度（包括换行高度）
 func get_text_height(width : int) -> int:
+	assert(type != LineType.Error, "还没有设置行的类型")
 	if type == LineType.ImageUrl:
 		return _line_height + margin.top + margin.bottom
 	return get_height_by_text(text, width)
@@ -144,7 +150,8 @@ func get_height_by_text(t: String, width: int) -> int:
 	if t.strip_edges() == "":
 		return get_height_of_one_line()
 	var text_width : int = width - margin.left - margin.right
-	return (font.get_multiline_string_size(t, alignment, text_width, font_size, -1, TEXT_BREAK_MODE).y 
+	return (
+		font.get_multiline_string_size(t, alignment, text_width, font_size, -1, TEXT_BREAK_MODE).y 
 		+ margin.top 
 		+ margin.bottom
 	)
@@ -191,6 +198,9 @@ func handle_by_path(file_path: String, width: int) -> void:
 
 ## 处理 markdown 字符串行
 func handle_markdown(width: int) -> void:
+	_last_width = width
+	assert(_last_width != -1, "没有设置页面宽度")
+	
 	# 初始化属性
 	text = origin_text
 	type = LineType.Normal
@@ -245,14 +255,9 @@ func handle_markdown(width: int) -> void:
 			printerr("其他类型：", type, "  ", info.get("tag"))
 	
 	# 行高
-	var height = get_text_height( width )
-	if _line_height != height:
-		_line_height = height
-		height_changed.emit()
-	elif _line_height == 0:
+	_line_height = get_text_height( width )
+	if _line_height == 0:
 		_line_height = get_height_of_one_line()
-		if _line_height != 0:
-			height_changed.emit()
 
 
 # 处理图片 URL。这个 [code]callback[/code] 回调方法需要有一个 [Image] 类型的参数接收返回的图片 
@@ -318,6 +323,6 @@ func draw_to(canvas: CanvasItem, width: int):
 		var content_rect = get_content_rect(width)
 		var text_width : int = content_rect.size.x
 		var text_pos : Vector2 = content_rect.position
-		text_pos.y += get_font_height()
+		text_pos.y += get_font_height() - 2 # 需要向下偏移一点距离
 		canvas.draw_multiline_string(font, text_pos, text, alignment, text_width, font_size, -1, font_color, TEXT_BREAK_MODE)
 

@@ -18,7 +18,7 @@ var cliecked_rect: Rect2 = Rect2()
 #============================================================
 func _draw() -> void:
 	if document:
-		document.draw(self)
+		document.draw(self, 0, size.y)
 		draw_rect(cliecked_rect, Color.RED, false, 2)
 
 
@@ -41,11 +41,12 @@ func get_width():
 func load_file(file_path: String):
 	if get_width() == 0:
 		await Engine.get_main_loop().process_frame
-	document = Document.new(file_path)
-	document.max_width = get_width()
+	
+	document = Document.new(get_width(), file_path)
 	document.update_doc_height()
-	size.y = 0
-	custom_minimum_size.y = document.get_doc_height()
+	#size.y = 0
+	#custom_minimum_size.y = document.get_doc_height()
 	queue_redraw()
+	force_update_transform() # 立即刷新
 
 
