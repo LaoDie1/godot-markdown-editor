@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://src/scene/main.gd" id="1_5283d"]
 [ext_resource type="Script" path="res://addons/simplemenu/simple_menu.gd" id="1_s2vjw"]
-[ext_resource type="PackedScene" uid="uid://bi6uhrh1qr7e5" path="res://src/scene/document_canvas/document_canvas.tscn" id="2_850oq"]
+[ext_resource type="PackedScene" uid="uid://bi6uhrh1qr7e5" path="res://src/scene/canvas/document_canvas.tscn" id="2_850oq"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_al0ie"]
 bg_color = Color(1, 0.991272, 0.898438, 1)

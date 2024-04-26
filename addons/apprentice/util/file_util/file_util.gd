@@ -76,9 +76,8 @@ static func write_as_string(
 			WCHAR: en_text = text.to_utf8_buffer().get_string_from_wchar()
 			_:
 				assert(false, "错误的编码类型")
-		
 		file.store_string(en_text)
-		file = null
+		file.flush() # 防止程序退出时没有保存
 		return true
 	return false
 
@@ -134,7 +133,7 @@ static func write_as_csv(file_path:String, list: Array[PackedStringArray], delim
 	if file:
 		for i in list:
 			file.store_csv_line(i, delim)
-		file = null
+		file.flush()
 		return true
 	return false
 
@@ -202,7 +201,7 @@ static func write_as_var(file_path: String, data, full_objects: bool = false):
 	var file := FileAccess.open(file_path, FileAccess.WRITE)
 	if file:
 		file.store_var(data, full_objects)
-		file = null
+		file.flush()
 		return true
 	return false
 
@@ -273,7 +272,7 @@ static func write_as_json(file_path: String, data):
 	write_as_string(file_path, d)
 
 
-##  读取 JSON 文件并解析
+##  读取 JSON 文件并解析数据
 ##[br]
 ##[br][code]file_path[/code]  文件路径
 ##[br][code]skip_cr[/code]  跳过 \r CR 字符
@@ -284,6 +283,21 @@ static func read_as_json(
 	var json = read_as_string(file_path, skip_cr)
 	if json != null:
 		return JSON.parse_string(json)
+
+
+## 写入字符串变量数据
+static func write_as_str_var(file_path: String, data):
+	var d = var_to_str(data)
+	write_as_string(file_path, d)
+
+
+##  读取字符串类型的变量数据
+static func read_as_str_var(file_path: String):
+	var text = read_as_string(file_path)
+	if text != null:
+		return str_to_var(text)
+	return null
+
 
 ##  扫描目录
 static func scan_directory(dir: String, recursive:= false) -> Array[String]:
@@ -337,7 +351,7 @@ static func save_scene(node: Node, path: String, save_flags: int = ResourceSaver
 ## 如果目录不存在，则进行创建
 ##[br]
 ##[br][code]return[/code] 如果不存在则进行创建并返回 [code]true[/code]，否则返回 [code]false[/code]
-static func if_not_exists_make_dir(dir_path: String) -> bool:
+static func make_dir_if_not_exists(dir_path: String) -> bool:
 	if not DirAccess.dir_exists_absolute(dir_path):
 		DirAccess.make_dir_recursive_absolute(dir_path)
 		return true
@@ -346,10 +360,8 @@ static func if_not_exists_make_dir(dir_path: String) -> bool:
 
 ## Shell 打开文件
 static func shell_open(path: String) -> void:
-	path = get_real_path(path)
-	if not file_exists(path):
-		printerr("不存在 %s 文件！" % [path])
-		return
+	if path.begins_with("res://") or path.begins_with("user://"):
+		path = get_real_path(path)
 	OS.shell_open(path)
 
 
@@ -400,4 +412,27 @@ static func files_group(path: String, pattern: String):
 		
 	else:
 		printerr(DirAccess.get_open_error())
-	
+
+
+## 移动文件到
+static func move_file(from: String, to: String) -> Error:
+	return rename(from, to)
+
+static func rename(from: String, to: String) -> Error:
+	if from == to:
+		return ERR_FILE_BAD_PATH
+	return DirAccess.rename_absolute(from, to)
+
+
+
+
+## 获取文件修改时间时间戳
+static func get_file_modified_time(path: String) -> int:
+	return FileAccess.get_modified_time(path)
+
+## 获取文件大小
+static func get_file_length(path: String) -> int:
+	var file = FileAccess.open(path, FileAccess.READ)
+	if file:
+		return file.get_length()
+	return 0

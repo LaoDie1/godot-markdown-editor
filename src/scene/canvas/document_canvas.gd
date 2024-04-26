@@ -31,7 +31,7 @@ var _selected_pos : Vector2 = Vector2()
 var _selected_line_item : LineItem = null:
 	set(v):
 		_selected_line_item = v
-		if _selected_line_item == null	:
+		if _selected_line_item == null:
 			_selected_line_idx = -1
 		else:
 			_selected_line_idx = line_items.find(_selected_line_item)
@@ -48,8 +48,9 @@ func _init() -> void:
 	instance = self
 
 func _ready():
-	_init_string_lines([""])
+	_init_string_lines([])
 	queue_redraw()
+	set_anchors_preset(Control.PRESET_FULL_RECT)
 
 
 func _draw():
@@ -74,7 +75,7 @@ func _draw():
 		alignment = HORIZONTAL_ALIGNMENT_RIGHT,
 	})
 	top_item_right.draw_to(self, width)
-	line_offset_point += top_item_left.get_height( -1 ) + 2
+	line_offset_point += top_item_left.get_text_height( -1 ) + 2
 	
 	# 顶部分割线
 	line_offset_point += 4
@@ -137,38 +138,44 @@ func init_lines(lines: Array) -> void:
 	text_edit.visible = false
 	_selected_line_item = null
 	line_items.clear()
-	
 	_init_string_lines(lines)
 	
 	queue_redraw()
 
 
 func _init_string_lines(string_lines: Array):
+	if string_lines.is_empty():
+		string_lines.append("")
 	match file_path.get_extension().to_lower():
 		"md":
 			var idx = 0
 			while idx < string_lines.size():
 				var item = LineItem.new(string_lines[idx])
-				item.handle_md()
-				if item.type == PName.LineType.Code:
-					while true:
-						idx += 1
-						if idx == string_lines.size() or item.push_line(string_lines[idx]):
+				item.handle_markdown( DocumentCanvas.instance.get_width() )
+				# 代码块
+				if item.type == LineType.Code:
+					idx += 1
+					while idx < string_lines.size():
+						item.origin_text += "\n" + string_lines[idx]
+						if string_lines[idx].strip_edges().begins_with("```"):
 							break
-					item.handle_md()
+						idx += 1
+					item.handle_markdown(DocumentCanvas.instance.get_width())
+				
 				line_items.append( item )
 				idx += 1
 			
 		_:
 			for line in string_lines:
 				line_items.append( LineItem.new(line) )
+	
 	# 末尾
 	line_items.append(LineItem.new(""))
 
 
 # 绘制位置向下偏移
 func _move_next_line_point(item: LineItem):
-	line_offset_point += item.get_height(get_width())
+	line_offset_point += item.get_text_height(get_width())
 	line_offset_point += Config.line_spacing
 
 # 绘制分隔线
@@ -220,7 +227,7 @@ func _edit_line(item: LineItem):
 	text_edit.text = item.origin_text.substr(0, item.origin_text.length())
 	text_edit.visible = true
 	text_edit.custom_minimum_size.x = get_width() + 4
-	text_edit.custom_minimum_size.y = item.get_height(get_width())
+	text_edit.custom_minimum_size.y = item.get_text_height(get_width())
 	text_edit.get_parent_control().position = Vector2(0, item.line_y_point + 1) # 设置位置
 	
 	text_edit.add_theme_font_size_override("font_size", item.font_size)
@@ -238,7 +245,7 @@ func _edit_line(item: LineItem):
 func _insert_line(line_idx: int, text: String = "") -> LineItem:
 	var new_line_item = LineItem.new(text)
 	if text != "":
-		new_line_item.handle_by_path(file_path)
+		new_line_item.handle_by_path(file_path, get_width())
 	if line_idx < line_items.size():
 		var last_item = line_items[line_idx]
 		line_items.insert(line_idx, new_line_item)
@@ -261,10 +268,10 @@ func _delete_line(line_idx:  int) -> void:
 			var last_line_item = line_items[line_idx - 1]
 			var last_caret_column = last_line_item.text.length()
 			last_line_item.origin_text += line_item.text
-			last_line_item.handle_md()
+			last_line_item.handle_markdown(DocumentCanvas.instance.get_width())
 			FuncUtil.timeout(0.01, text_edit.set_caret_column.bind(last_caret_column))
 			
-		_update_line_after_pos(line_idx, -line_item.get_height(get_width()))
+		_update_line_after_pos(line_idx, -line_item.get_text_height(get_width()))
 
 
 # 更新选中行的内容
@@ -279,11 +286,11 @@ func _update_selected_line(hide_text_edit: bool):
 		text_edit.visible = false
 		_selected_line_item = null
 	
-	var last_height : float = line_item.get_height(get_width())
+	var last_height : float = line_item.get_text_height(get_width())
 	# 设置内容
 	line_item.origin_text = text_edit.text
-	line_item.handle_by_path(file_path)
-	var height = line_item.get_height(get_width())
+	line_item.handle_by_path(file_path, get_width())
+	var height = line_item.get_text_height(get_width())
 	if last_height != height:
 		_update_line_after_pos( _selected_line_idx, height - last_height)
 	queue_redraw()
@@ -301,7 +308,7 @@ func _on_text_edit_gui_input(event):
 				# 插入新的行
 				var new_idx : int = _selected_line_idx + 1
 				var text : String = ""
-				if _selected_line_item.type == PName.LineType.UnorderedList:
+				if _selected_line_item.type == LineType.UnorderedList:
 					text = "- "
 				var new_line_item : LineItem = _insert_line(new_idx, text)
 				
@@ -341,20 +348,21 @@ func _on_text_edit_gui_input(event):
 				
 			else:
 				# 延迟调用
-				var s_line = _selected_line_item
-				FuncUtil.execute_deferred(
-					func():
-						s_line.origin_text = text_edit.text
-						s_line.handle_by_path(file_path)
-						text_edit.custom_minimum_size.y = 0
-						queue_redraw()
-				)
+				if _selected_line_item:
+					var s_line = _selected_line_item
+					FuncUtil.execute_deferred(
+						func():
+							s_line.origin_text = text_edit.text
+							s_line.handle_by_path(file_path, get_width())
+							text_edit.custom_minimum_size.y = 0
+							queue_redraw()
+					)
 
 
 func _on_text_edit_resized():
 	if _selected_line_item and text_edit.visible:
-		var height = _selected_line_item.get_height_by_text(text_edit.text, get_width())
-		var last_height = _selected_line_item.get_height(get_width())
+		var height = _selected_line_item.get_text_height_from(text_edit.text, get_width())
+		var last_height = _selected_line_item.get_text_height(get_width())
 		_selected_line_item.line_y_point += height - last_height
 		_update_selected_line(false)
 		_update_line_after_pos( _selected_line_idx, height - last_height)

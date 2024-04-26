@@ -16,7 +16,7 @@
 ##    var dir = Node2D.global_position.direction_to(target.global_position)
 ##    Node2D.global_position += dir * speed * get_physics_process_delta_time()
 ##, Node2D)
-##[/codeblock]
+##[/codeblock] 
 class_name FuncUtil
 
 

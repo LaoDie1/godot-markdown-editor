@@ -1,6 +1,6 @@
 [gd_scene load_steps=8 format=3 uid="uid://bi6uhrh1qr7e5"]
 
-[ext_resource type="Script" path="res://src/scene/document_canvas/document_canvas.gd" id="1_q8bgb"]
+[ext_resource type="Script" path="res://src/scene/canvas/document_canvas.gd" id="1_q8bgb"]
 
 [sub_resource type="FontVariation" id="FontVariation_ebmto"]
 
@@ -92,6 +92,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+border_width = 4.0
 editor_only = false
 
 [connection signal="focus_exited" from="MarginContainer/TextEdit" to="." method="_on_text_edit_focus_exited"]

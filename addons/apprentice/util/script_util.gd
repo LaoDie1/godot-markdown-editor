@@ -492,19 +492,21 @@ static func has_getter_or_setter(script: Script, propertys: PackedStringArray) -
 	return result
 
 
-## 初始化类的静态变量值为自身的名称。用于方便添加静态属性，作为配置 key 使用[br][br]
-##比如添加一个 [code]ConfigKey[/code] 类里面添加静态变量作为配置属性
-##
+## 初始化类的静态变量值为自身的名称。用于方便添加静态属性，作为配置 key 使用
+##[br]
+##[br] - [code]script[/code] 注入的脚本或脚本类 
+##[br] - [code]return[/code] 返回注入的属性数据 
+##[br]
+##[br]比如添加一个 [code]ConfigKey[/code] 类里面添加静态变量作为配置属性
 ##[codeblock]
 ##class_name ConfigKey
 ##
 ##class Path:
 ##    static var current_dir
 ##    static var opened_files
-##
 ##[/codeblock]
 ##可以方便的通过传入 [code]ConfigKey.Path.current_dir[/code] 作为 key 获取配置属性值
-static func init_class_static_value(script: GDScript, is_path_key: bool) -> void:
+static func init_class_static_value(script: GDScript, is_path_key: bool) -> Array:
 	var class_regex = RegEx.new()
 	class_regex.compile("^class\\s+(?<class_name>\\w+)\\s*:")
 	var var_regex = RegEx.new()
@@ -517,6 +519,7 @@ static func init_class_static_value(script: GDScript, is_path_key: bool) -> void
 	var last_var_list : Array
 	var lines = script.source_code.split("\n")
 	var result : RegExMatch
+	data[""] = last_var_list
 	for line in lines:
 		result = class_regex.search(line)
 		if result:
@@ -532,19 +535,26 @@ static func init_class_static_value(script: GDScript, is_path_key: bool) -> void
 				if last_class != "":
 					last_var_list.append(var_name)
 				else:
-					p_name.set(var_name, var_name.to_lower())
+					data[""].append(var_name)
 	
 	# 设置值
+	var propety_map : Dictionary = {}
 	var const_map = script.get_script_constant_map()
 	var object : Object
 	for c_name:String in data:
-		object = const_map[c_name].new()
+		if c_name == "":
+			object = script.new()
+		else:
+			object = const_map[c_name].new()
 		var property_list = data[c_name]
-		for property:String in property_list:
+		for property in property_list:
 			if is_path_key:
-				object[property] = StringName("/" + c_name.to_lower() + "/" + property.to_lower())
+				object[property] = StringName("/" + c_name + "/" + property)
 			else:
-				object[property] = StringName(property.to_lower())
+				object[property] = StringName(property)
+			propety_map[object[property]] = null
+	propety_map.erase(null)
+	return propety_map.keys()
 
 
 

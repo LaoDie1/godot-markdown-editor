@@ -16,6 +16,4 @@ var bottom : float = 0
 
 
 func _init(params: Dictionary = {}):
-	for p in params:
-		if p in self:
-			self[p] = params[p]
+	JsonUtil.set_property_by_dict(params, self)

@@ -1,0 +1,41 @@
+[gd_scene load_steps=4 format=3 uid="uid://y1suv5wucxgk"]
+
+[ext_resource type="Script" path="res://test/document/test_doc.gd" id="1_677vc"]
+[ext_resource type="Script" path="res://src/scene/canvas/doc_canvas.gd" id="2_c7ljp"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wbxhs"]
+bg_color = Color(0.921875, 0.921875, 0.921875, 1)
+
+[node name="DocHeightTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_677vc")
+metadata/_edit_lock_ = true
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 0
+offset_left = 226.0
+offset_top = 142.0
+offset_right = 972.0
+offset_bottom = 607.0
+metadata/_edit_group_ = true
+
+[node name="Panel" type="Panel" parent="MarginContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_wbxhs")
+
+[node name="ReferenceRect" type="ReferenceRect" parent="MarginContainer"]
+layout_mode = 2
+mouse_filter = 2
+border_color = Color(0, 0, 0, 1)
+border_width = 2.0
+editor_only = false
+
+[node name="DocCanvas" type="Control" parent="MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("2_c7ljp")

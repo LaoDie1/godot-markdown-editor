@@ -10,15 +10,22 @@ extends Node
 
 var config_file_path : String = OS.get_config_dir().path_join("Godot/.markdown_editor_config.cfg")
 var config_file : ConfigFile = ConfigFile.new()
-
+var data_file : DataFile = DataFile.instance(
+	OS.get_config_dir().path_join("Godot/Markdown Editor/.config.cfg"),
+	DataFile.BYTES, 
+	{
+		
+	}
+)
 
 var font : Font
-var opened_file_paths : Array = []
 var top_font_size : int = 14
 var font_size : int = 18
 var accent_color : Color = Color(0.7578, 0.5261, 0.2944, 1)
 var text_color : Color = Color(0,0,0,0.8)
 var line_spacing : float = 2
+
+var opened_file_paths : Array = []
 
 
 #============================================================

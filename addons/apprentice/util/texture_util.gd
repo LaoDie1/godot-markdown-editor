@@ -248,7 +248,7 @@ static func preview_scene(scene: PackedScene, callback: Callable) -> void:
 	
 	var instance = scene.instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE)
 	if instance.get_script() != null and ((instance.get_script() as GDScript).is_tool()):
-		EditorUtil.get_editor_interface() \
+		EditorInterface \
 			.get_resource_previewer() \
 			.queue_edited_resource_preview(scene, _PreviewReceiver, "preview", callback)
 	
