@@ -9,27 +9,66 @@
 class_name Block
 
 
-var begin : int = -1
-var end : int = -1
-var token : int
-
-var text : String 
-var next_block : Block # 连着通一个块中的其他样式
-
-
-func _init(bytes: PackedByteArray, begin: int) -> void:
-	self.begin = begin
-
-
-func format_code(indent: int = 0):
-	var text = "\t".repeat(indent) + text
+enum Type {
+	TEXT,     ## 文本
+	IMAGE,    ## 图片
+	LINK,     ## 链接
 	
-	var blocks : Array[Block] = []
-	var last : Block = next_block
-	while last:
-		blocks.append(last)
-		last = last.next_block
+	ITALIC,   ## *
+	BOLD,     ## **
+	ITALIC_BOLD, ## ***
+	CODE,     ## 代码  `
+	DELETE,   ## 删除线 ~~
+}
+
+
+class BlockRegex:
+	var regex = RegEx.new()
+	func _init() -> void:
+		regex.compile(
+			"(?<IMAGE>!\\[(.*?)\\]\\((.*?)\\))"   # 图片
+			+ "|(?<LINK>\\[(.*?)\\]\\((.*?)\\))" # 链接
+			+ "|(?<LINK>\\<(.*?)\\>)"
+		)
+
+static var block_regex : BlockRegex = BlockRegex.new()
+
+## 处理文本块（代码块则不需要调用）
+static func handle_block(text: String) -> Array:
+	var block_regex = BlockRegex.new()
+	var blocks : Array = []
+	var last_from : int = 0
+	var result : RegExMatch = block_regex.regex.search(text, last_from)
+	while result != null:
+		blocks.append( {
+			"type": Type.TEXT,
+			"text": text.substr(last_from, result.get_start() - last_from),
+		} ) 
+		
+		var type : int = Type.get( result.names.keys()[0], 0)
+		var data = {
+			"type": type,
+			"text": result.get_string(),
+		}
+		match type:
+			Type.IMAGE:
+				data["name"] = result.strings[2]
+				data["url"] = result.strings[3]
+			Type.LINK:
+				if result.strings[6] != "":
+					data["name"] = result.strings[5]
+					data["url"] = result.strings[6]
+				else:
+					data["url"] = result.strings[8]
+		blocks.append(data)
+		last_from = result.get_end()
+		result = block_regex.regex.search(text, last_from)
 	
-	var items = blocks.map(func(block: Block): return block.format_code(indent + 1))
-	text += "".join(items)
-	return text
+	if last_from < text.length():
+		blocks.append({
+			"type": Type.TEXT,
+			"text": text.substr(last_from),
+		})
+	return blocks
+
+

@@ -198,6 +198,7 @@ func handle_by_path(file_path: String, width: int) -> void:
 		text = origin_text
 	handle_markdown(width)
 
+
 ## 处理 markdown 字符串行
 func handle_markdown(width: int) -> void:
 	_last_width = width
@@ -252,10 +253,8 @@ func handle_markdown(width: int) -> void:
 					_line_height = get_height_of_one_line()
 			)
 			return
-		
 		LineType.Normal:
 			pass
-		
 		_:
 			printerr("其他类型：", type, "  ", info.get("tag"))
 	
@@ -287,16 +286,16 @@ func _handle_image_url(url: String, callback: Callable):
 	else:
 		# 本地图片
 		var path : String = url
-		if path.begins_with("/"):
-			# 绝对路径
-			var image = FileUtil.load_image(path)
-			callback.call(image)
-		else:
+		if not path.begins_with("/"):
 			# 相对路径，这个文件下的同级路径
-			var image = FileUtil.load_image( file_path.get_base_dir().path_join(url) )
-			callback.call(image)
+			path = file_path.get_base_dir().path_join(url)
+		callback.call( Image.load_from_file(path) )
 
 
+
+#============================================================
+#  绘制
+#============================================================
 ## 绘制到这个节点上。需要更新计算高度
 ##[br]
 ##[br]- [code]canvas[/code]  绘制到的目标画布
@@ -337,7 +336,7 @@ func draw_to(canvas: CanvasItem, width: int):
 				canvas.draw_texture(_image, content_rect.position)
 				return
 	
-	# TODO 懒加载
+	# TODO 懒加载块
 	#if blocks.is_empty() and type != LineType.Code:
 		#blocks = BlockType.handle_block(text)
 		
