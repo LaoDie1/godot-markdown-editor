@@ -25,7 +25,7 @@ var line_offset_point : float = 0
 var line_items : Array[LineItem] = []
 var pos_to_line_item : Dictionary = {}  # 点击的位置对应的 y 轴对应的字符串
 
-var _origin_text = ""
+var _origin_text : String = ""
 
 var _selected_pos : Vector2 = Vector2()
 var _selected_line_item : LineItem = null:
@@ -46,6 +46,7 @@ var _group_to_line_items : Dictionary = {}
 #============================================================
 func _init() -> void:
 	instance = self
+
 
 func _ready():
 	_init_string_lines([])
@@ -109,7 +110,7 @@ func _gui_input(event):
 #============================================================
 #  自定义
 #============================================================
-func get_string() -> String:
+func get_text() -> String:
 	var text = ""
 	for line_item in line_items:
 		text += line_item.origin_text
@@ -131,10 +132,7 @@ func open_file(path: String) -> void:
 ## 初始化所有行
 func init_lines(lines: Array) -> void:
 	LineItem.reset_incr_id()
-	
-	_origin_text = ""
-	for line in lines:
-		_origin_text += line
+	_origin_text = "\n".join(lines)
 	text_edit.visible = false
 	_selected_line_item = null
 	line_items.clear()

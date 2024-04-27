@@ -49,7 +49,8 @@ var font : Font
 
 ## 文字数据块 # TODO 后续绘制时如果为空，则懒加载数据块
 var blocks : Array[Block] = []
-
+## 文件所在路径
+var file_path : String = ""
 
 # 空白缩进
 var _indent : int = 0
@@ -247,6 +248,8 @@ func handle_markdown(width: int) -> void:
 				if not image.is_empty():
 					_image = ImageTexture.create_from_image(image)
 					_line_height = image.get_size().y
+				else:
+					_line_height = get_height_of_one_line()
 			)
 			return
 		
@@ -262,23 +265,36 @@ func handle_markdown(width: int) -> void:
 
 # 处理图片 URL。这个 [code]callback[/code] 回调方法需要有一个 [Image] 类型的参数接收返回的图片 
 func _handle_image_url(url: String, callback: Callable):
-	var image_name : String = url.md5_text()
-	var cache_image_path : String = OS.get_cache_dir().path_join("godot_markdown_editor/%s.webp" % image_name)
-	if not FileUtil.file_exists(cache_image_path):
-		if not DirAccess.dir_exists_absolute(cache_image_path.get_base_dir()):
-			DirAccess.make_dir_recursive_absolute(cache_image_path.get_base_dir())
-		# 网络请求图片
-		ImageRequest.queue_request(url, func(data):
-			var image : Image = data.image
-			if not image.is_empty():
-				var error = FileUtil.save_image(image, cache_image_path)
-				if error != OK:
-					printerr("保存失败：", error, "  ", error_string(error), "  ", cache_image_path)
+	if url.begins_with("http"):
+		# 网络图片
+		var image_name : String = url.md5_text()
+		var cache_image_path : String = OS.get_cache_dir().path_join("godot_markdown_editor/%s.webp" % image_name)
+		if not FileUtil.file_exists(cache_image_path):
+			if not DirAccess.dir_exists_absolute(cache_image_path.get_base_dir()):
+				DirAccess.make_dir_recursive_absolute(cache_image_path.get_base_dir())
+			# 网络请求图片
+			ImageRequest.queue_request(url, func(data):
+				var image : Image = data.image
+				if not image.is_empty():
+					var error = FileUtil.save_image(image, cache_image_path)
+					if error != OK:
+						printerr("保存失败：", error, "  ", error_string(error), "  ", cache_image_path)
+				callback.call(image)
+			)
+		else:
+			var image : Image = FileUtil.load_image(cache_image_path)
 			callback.call(image)
-		)
 	else:
-		var image : Image = FileUtil.load_image(cache_image_path)
-		callback.call(image)
+		# 本地图片
+		var path : String = url
+		if path.begins_with("/"):
+			# 绝对路径
+			var image = FileUtil.load_image(path)
+			callback.call(image)
+		else:
+			# 相对路径，这个文件下的同级路径
+			var image = FileUtil.load_image( file_path.get_base_dir().path_join(url) )
+			callback.call(image)
 
 
 ## 绘制到这个节点上。需要更新计算高度

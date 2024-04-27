@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Markdown Editor"
-run/main_scene="res://src/scene/editor/markdown_editor.tscn"
+run/main_scene="res://src/scene/main.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")
 run/low_processor_mode=true
 config/icon="res://icon.svg"
@@ -26,6 +26,7 @@ ImageRequest="*res://src/global/image_http_request/image_request.tscn"
 
 window/size/viewport_width=1600
 window/size/viewport_height=1000
+window/subwindows/embed_subwindows=false
 
 [editor_plugins]
 

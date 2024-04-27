@@ -11,7 +11,6 @@ extends TextEdit
 const DEBUG_CONTENT = """ID: {id}
 FONT_HEIGHT: {font_height}
 TYPE: {type}
-TYPE_STRING: {type_string}
 FONT_SIZE: {font_size}
 SHOW_TEXT: {text}
 ORIGIN_TEXT: {origin_text}

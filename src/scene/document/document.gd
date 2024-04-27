@@ -8,10 +8,10 @@
 ## 处理整个文档的行。提前计算文档高度，处理每个行
 class_name Document
 
+signal height_changed
 
 ## 页面高度
 const PAGE_HEIGHT = 300
-
 
 ## 文档最大宽度
 var max_width : int = -1
@@ -19,7 +19,8 @@ var max_width : int = -1
 
 var _file_path: String
 var _line_items: Array[LineItem]
-var _first_line : LineItem
+var _first_line : LineItem # 第一行
+var _last_line: LineItem # 最后一行
 var _doc_height : int = 0
 var _page_first_line : Dictionary = {} # 分页，每页第一个行
 
@@ -123,7 +124,7 @@ func init_lines(string_lines: Array) -> void:
 		_convert_strings(string_lines)
 	else:
 		for line in string_lines:
-			_line_items.append( LineItem.new(line) )
+			_line_items.append( create_line(line) )
 
 
 # 处理 string 列表为 markdown
@@ -136,19 +137,6 @@ func _convert_strings(string_lines: Array):
 	var last_line : LineItem = _first_line
 	for idx in range(1, string_lines.size()):
 		last_line = LineItem.create(last_line, string_lines[idx])
-	# 处理为 markdown
-	_handle_markdown_line(_first_line)
-	_first_line.for_next(_handle_markdown_line)
-
-func _handle_markdown_line(current_line: LineItem):
-	current_line.handle_markdown(max_width)
-	if current_line.type == LineType.Code:
-		# 合并代码块行
-		var line = current_line.find_next(func(next: LineItem):
-			next.handle_markdown(max_width)
-			return next.type == LineType.Code
-		)
-		merge_line(current_line, line)
 
 
 ## 合并
@@ -174,45 +162,66 @@ func merge_line(from_line: LineItem, to_line: LineItem):
 	# 重新计算
 	from_line.handle_markdown(max_width)
 
+## 创建新的行
+func create_line(text: String, params: Dictionary = {}) -> LineItem:
+	params = params.duplicate()
+	if not params.has("file_path"):
+		params["file_path"] = _file_path
+	return LineItem.new(text, params)
 
 ## 插入新的行到这一行之前
 func insert_before(from_line: LineItem, text: String = "") -> LineItem:
-	var new_line = LineItem.new(text)
-	var previous = from_line.previous_line
-	from_line.previous_line = new_line
-	new_line.next_line = from_line
-	new_line.previous_line = previous
-	previous.next_line = new_line
-	
+	return insert_after(from_line.previous_line, text)
+
+func insert_after(from_line: LineItem, text: String = "") -> LineItem:
+	var new_line = create_line(text)
+	var tmp = from_line.next_line
+	from_line.next_line = new_line
+	new_line.previous_line = from_line
+	new_line.next_line = tmp
 	# 后面的位置进行偏移
 	var y_offset = new_line.get_text_height(max_width)
 	new_line.for_next(
 		func(line: LineItem):
 			line.line_y_point += y_offset
 	)
-	
 	return new_line
 
+## 处理 Markdown 的行
+func handle_markdown_line(current_line: LineItem):
+	current_line.handle_markdown(max_width)
+	if current_line.type == LineType.Code:
+		# 合并代码块行
+		var line = current_line.find_next(func(next: LineItem):
+			next.handle_markdown(max_width)
+			return next.type == LineType.Code
+		)
+		merge_line(current_line, line)
 
 ## 增加文档高度
 func add_doc_height(line_item: LineItem):
 	_doc_height += line_item.get_line_height() + Config.line_spacing
 
-
-## 计算文档高度
+## 计算文档高度。这个操作比较耗费性能
 func update_doc_height():
 	_page_first_line.clear()
+	var last_doc_height = _doc_height
 	_doc_height = 0
 	if _first_line != null:
+		handle_markdown_line(_first_line)
 		add_doc_height(_first_line)
 		set_group_line(0, _first_line)
 		_first_line.for_next(
 			func(line: LineItem):
+				handle_markdown_line(line)
 				line.line_y_point = _doc_height
 				set_group_line(_doc_height, line)
 				# 向下偏移文档位置
 				add_doc_height(line)
+				_last_line = line
 		)
+	if last_doc_height != _doc_height:
+		height_changed.emit()
 
 
 ## 绘制到画布。需要在 canvas 节点的 [method CanvasItem._draw] 中调用这个方法

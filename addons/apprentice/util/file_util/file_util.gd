@@ -82,8 +82,7 @@ static func write_as_string(
 	return false
 
 static func load_image(file_path: String) -> Image:
-	var image = Image.load_from_file(file_path)
-	return image
+	return Image.load_from_file(file_path)
 
 static func save_image(image: Image, path: String):
 	return image.save_webp(path)
