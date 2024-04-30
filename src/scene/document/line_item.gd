@@ -100,7 +100,7 @@ func get_line_height() -> int:
 ## 获取当前字符串总高度（包括换行高度）
 func get_text_height() -> int:
 	if _text == "":
-		return 8
+		return 14
 	#assert(type != LineType.Error, "还没有设置行的类型")
 	if type == LineType.ImageUrl:
 		return _line_height + margin.top + margin.bottom
