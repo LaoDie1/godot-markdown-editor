@@ -12,31 +12,33 @@ class_name Document
 signal height_changed
 
 
-## 页面高度
-const PAGE_HEIGHT = 300
+const PAGE_HEIGHT = 300 ## 页面高度
 
 
-## 文档最大宽度
-var max_width : int = -1
+var width : int: ## 文档宽度
+	set(v):
+		width = v
+		for line in get_lines():
+			line.update_status = false
+			line.view_status = false
+var file_path: String
 
 
-var _file_path: String
-var _line_items: Array[LineItem]
-var _first_line : LineItem # 第一行
-var _last_line: LineItem # 最后一行
-var _doc_height : int = 0
+var _lines : TwowayLinkedList = TwowayLinkedList.new() # 所有行
+var _document_height : int = 0 # 文档高度
+
+var _last_offset_y : int = 0
 var _page_first_line : Dictionary = {} # 分页，每页第一个行
-var _handle_method : Callable # 处理行的方法
 
 
 
 #============================================================
 #  内置
 #============================================================
-func _init(max_width: int, file_path: String) -> void:
-	self._file_path = file_path
-	self.max_width = max_width
-	assert(max_width > 0, "文档宽度大小必须超过 0！")
+func _init(width: int, file_path: String) -> void:
+	self.file_path = file_path
+	self.width = width
+	assert(width > 0, "文档宽度大小必须超过 0！")
 	
 	init_lines(FileUtil.read_as_lines(file_path))
 
@@ -46,16 +48,15 @@ func _init(max_width: int, file_path: String) -> void:
 #============================================================
 ## 获取所有行
 func get_lines() -> Array[LineItem]:
-	var list : Array[LineItem] = []
-	var last : LineItem = _first_line
-	while last != null:
-		list.append(last)
-		last = last.next_line
-	return list
+	return Array(_lines.get_list(), TYPE_OBJECT, "RefCounted", LineItem)
 
 ## 获取第一行
 func get_first_line() -> LineItem:
-	return _first_line
+	return _lines.get_first()
+
+## 获取最后一行
+func get_last_line() -> LineItem:
+	return _lines.get_last()
 
 ## 获取文档字符
 func get_text() -> String:
@@ -66,9 +67,8 @@ func get_text() -> String:
 	return "\n".join(lines)
 
 ## 获取文档高度
-func get_doc_height():
-	return _doc_height
-
+func get_document_height():
+	return _document_height
 
 ## 设置这个位置的组的行
 func set_group_line(y: float, line: LineItem):
@@ -76,9 +76,15 @@ func set_group_line(y: float, line: LineItem):
 	if not _page_first_line.has(i):
 		_page_first_line[i] = line
 
-func get_group_line(y) -> LineItem:
-	var i : int = int(y / PAGE_HEIGHT)
-	while not _page_first_line.has(i):
+func remove_group_line(y: float, line: LineItem):
+	var i : int = ceili(y / PAGE_HEIGHT)
+	if _page_first_line.has(i) and _page_first_line[i] == line:
+		_page_first_line.erase(i)
+
+## 获取这个 Y 轴位置的行
+func get_group_line(y: int) -> LineItem:
+	var i : int = y / PAGE_HEIGHT
+	while not _page_first_line.has(i) and i > -1:
 		i -= 1
 	return _page_first_line.get(i)
 
@@ -86,18 +92,24 @@ func get_group_line(y) -> LineItem:
 func get_line_by_point(point: Vector2) -> LineItem:
 	var start_line : LineItem = get_group_line(point.y)
 	if start_line:
+		if start_line.offset_y > point.y:
+			var previous = _lines.get_previous(start_line)
+			if previous:
+				return previous
+			return start_line
+		
 		var last_line = [null] # 必须用引用类型的数据，否则匿名函数中会赋值不上
-		var mouse_line : LineItem = start_line.find_next(
-			func(line: LineItem):
-				last_line[0] = line
-				# 在鼠标位置范围内
-				if (line.previous_line.line_y_point <= point.y
-					and line.line_y_point >= point.y
-				):
-					return true
+		var mouse_line : LineItem = _lines.find_next(start_line, func(line: LineItem):
+			last_line[0] = line
+			# 在鼠标位置范围内
+			var previous : LineItem = _lines.get_previous(line)
+			if (previous.offset_y <= point.y
+				and line.offset_y >= point.y
+			):
+				return true
 		)
 		if mouse_line:
-			return mouse_line.previous_line
+			return _lines.get_previous(mouse_line)
 		else:
 			if last_line[0]:
 				return last_line[0]
@@ -109,28 +121,13 @@ func get_line_by_point(point: Vector2) -> LineItem:
 func get_line(idx: int) -> LineItem:
 	assert(idx >= 0, "行索引值必须超过 0")
 	var i = 0
-	var last_line = _first_line
+	var last_line = get_last_line()
 	while i != idx and last_line != null:
-		last_line = last_line.next_line
+		last_line = _lines.get_next(last_line)
 		i += 1
+		if i > 1000:
+			breakpoint
 	return last_line
-
-
-
-#============================================================
-#  处理方法
-#============================================================
-## 处理 Markdown 的行
-func handle_markdown_line(current_line: LineItem):
-	current_line.handle_markdown(max_width)
-	if current_line.type == LineType.Code:
-		# 合并代码块行
-		var line = current_line.find_next(func(next: LineItem):
-			next.handle_markdown(max_width)
-			return next.type == LineType.Code
-		)
-		merge_line(current_line, line)
-
 
 
 #============================================================
@@ -138,128 +135,107 @@ func handle_markdown_line(current_line: LineItem):
 #============================================================
 ## 初始化所有行
 func init_lines(string_lines: Array) -> void:
+	assert(width > 0, "文档页面宽度不能小于 0")
 	LineItem.reset_incr_id()
-	var file_type = _file_path.get_extension().to_lower()
-	if file_type == "md":
-		# 处理 Markdown 文档
-		_convert_strings(string_lines)
-	else:
-		for line in string_lines:
-			_line_items.append( create_line(line) )
+	
+	var offset_y : int = 0
+	var line_item : LineItem
+	for line in string_lines:
+		line_item = create_line(line)
+		line_item.offset_y = offset_y
+		set_group_line(offset_y, line_item)
+		offset_y += line_item.get_line_height() + ConfigKey.Display.line_spacing.value(8)
+	_document_height = offset_y
+	height_changed.emit()
 
+## 创建新的行（必须以这种方式 new，否则后续参数可能设置不对）
+func create_line(text: String, add_to_line: bool = true) -> LineItem:
+	var line_item = LineItem.new({
+		"origin_text": text,
+		"document": self,
+	})
+	line_item.height_changed.connect(_on_line_height_changed.bind(line_item))
+	if add_to_line:
+		_lines.append(line_item)
+	return line_item
 
-# 处理 string 列表为 markdown
-func _convert_strings(string_lines: Array):
-	_first_line = null
-	if string_lines.is_empty():
-		return
-	# 初始化所有行
-	_first_line = LineItem.create(null, string_lines[0])
-	var last_line : LineItem = _first_line
-	for idx in range(1, string_lines.size()):
-		last_line = LineItem.create(last_line, string_lines[idx])
+## 插入行
+func insert_line(line_item:LineItem, text: String):
+	var new_line_item = create_line(text, false)
+	_lines.insert_after(new_line_item, line_item)
+	new_line_item.offset_y = line_item.offset_y + line_item.get_line_height()
+	update_line_offset(new_line_item, new_line_item.get_line_height())
+	return new_line_item
 
+## 移除行
+func remove_line(line_item: LineItem):
+	if _lines.erase(line_item):
+		var height = line_item.get_line_height()
+		update_line_offset(line_item, -height)
+		_document_height -= height
 
-## 合并
+## 合并行
 func merge_line(from_line: LineItem, to_line: LineItem):
 	if from_line == null or to_line == null:
 		return
-	var new_text = from_line.origin_text
-	var last : LineItem = from_line.next_line
-	while last and last != to_line:
-		new_text += "\n" + last.origin_text
-		last = last.next_line
-	if last == null:
-		print("不是 from 行的后面的行")
-		return
-	new_text += "\n" + last.origin_text
-	
-	# 合并字符为新的行
-	from_line.origin_text += new_text
-	from_line.next_line = to_line.next_line
-	if to_line.next_line:
-		to_line.next_line.previous_line = from_line
-	
-	# 重新计算
-	from_line.handle_markdown(max_width)
+	# 合并返回中间的行
+	var list = _lines.merge(from_line, to_line)
+	if not list.is_empty():
+		from_line.origin_text += "\n"
+		from_line.origin_text += "\n".join(list.map(func(item): return item.text ))
+	else:
+		Prompt.show_error("不是 from 行的后面的行")
 
-## 创建新的行
-func create_line(text: String, params: Dictionary = {}) -> LineItem:
-	params = params.duplicate()
-	if not params.has("file_path"):
-		params["file_path"] = _file_path
-	return LineItem.new(text, params)
-
-## 插入新的行到这一行之前
-func insert_before(from_line: LineItem, text: String = "") -> LineItem:
-	return insert_after(from_line.previous_line, text)
-
-func insert_after(from_line: LineItem, text: String = "") -> LineItem:
-	var new_line = create_line(text)
-	var tmp = from_line.next_line
-	from_line.next_line = new_line
-	new_line.previous_line = from_line
-	new_line.next_line = tmp
-	# 后面的位置进行偏移
-	var y_offset = new_line.get_text_height(max_width)
-	new_line.for_next(
-		func(line: LineItem):
-			line.line_y_point += y_offset
+## 更新行的偏移
+func update_line_offset(from_line: LineItem, offset: int):
+	_document_height += offset
+	_lines.for_next(from_line, func(item: LineItem):
+		remove_group_line(item.offset_y, item)
+		item.offset_y += offset
+		set_group_line(item.offset_y, item)
 	)
-	return new_line
 
-## 增加文档高度
-func add_doc_height(line_item: LineItem):
-	_doc_height += line_item.get_line_height() + Config.line_spacing
-
-## 计算文档高度。这个操作比较耗费性能
-func update_doc_height():
-	_page_first_line.clear()
-	var last_doc_height = _doc_height
-	_doc_height = 0
-	if _first_line != null:
-		handle_markdown_line(_first_line)
-		add_doc_height(_first_line)
-		set_group_line(0, _first_line)
-		_first_line.for_next(
-			func(line: LineItem):
-				handle_markdown_line(line)
-				line.line_y_point = _doc_height
-				set_group_line(_doc_height, line)
-				# 向下偏移文档位置
-				add_doc_height(line)
-				_last_line = line
-		)
-	if last_doc_height != _doc_height:
-		height_changed.emit()
-
+## 获取行数
+func get_line_count() -> int:
+	return _lines.get_count()
 
 ## 绘制到画布。需要在 canvas 节点的 [method CanvasItem._draw] 中调用这个方法
-##[br]
-##[br]根据传入的 [param offset_y] 和 [param max_height] 参数绘制一块的区域内显示的内容
-##大大减少资源的消耗 
-##[br]
+##[br]根据传入的 [param canvas_offset_y] 和 [param max_height] 参数绘制一块的区域内显示的内容
+##大大减少运行的消耗
 ##[br]
 ##[br]- [code]canvas[/code]  绘制到的目标对象
-##[br]- [code]offset_y[/code]  绘制到画布的偏移的位置
+##[br]- [code]canvas_offset_y[/code]  绘制到画布的偏移的位置
 ##[br]- [code]max_height[/code]  绘制的最大高度
-func draw(canvas: CanvasItem, offset_y: int, max_height: int):
-	if _first_line == null:
+func draw(canvas: CanvasItem, canvas_offset_y: int, max_height: int):
+	if get_first_line() == null:
 		return 
-	
 	# 绘制的节点位置
-	var current_line = get_line_by_point(Vector2(0, offset_y))
+	var current_line = get_line_by_point(Vector2(0, canvas_offset_y))
 	if not current_line:
 		return
-	if current_line.previous_line != null:
-		current_line = current_line.previous_line
-	
+	var previous : LineItem = _lines.get_previous(current_line)
+	if previous != null:
+		current_line = previous
 	# 开始绘制
-	var max_offset : int = offset_y + max_height
-	current_line.draw_to(canvas, max_width)
-	current_line.find_next(
-		func(line: LineItem):
-			if line.line_y_point >= max_offset:
-				return true
-			line.draw_to(canvas, max_width)
-	)
+	var max_offset : int = canvas_offset_y + max_height
+	_lines.for_next(current_line, func(line: LineItem):
+		line.draw_to(canvas)
+		if line.offset_y >= max_offset:
+			return true
+	, true)
+
+
+
+#============================================================
+#  连接信号
+#============================================================
+var _update_doc_height_queue : bool = false
+func _on_line_height_changed(previous, height, line_item: LineItem):
+	var diff = height - previous
+	update_line_offset(line_item, diff)
+	if not _update_doc_height_queue:
+		_update_doc_height_queue = true
+		await Engine.get_main_loop().process_frame
+		_update_doc_height_queue = false
+		height_changed.emit()
+

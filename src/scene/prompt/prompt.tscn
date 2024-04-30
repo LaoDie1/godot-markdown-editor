@@ -1,0 +1,77 @@
+[gd_scene load_steps=6 format=3 uid="uid://cvq1itqxgbryv"]
+
+[ext_resource type="Script" path="res://src/scene/prompt/prompt.gd" id="1_w51od"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_b1f6r"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+
+[sub_resource type="Animation" id="Animation_cx41a"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_7un2e"]
+resource_name = "run"
+length = 3.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.189825, 0.294835, 0.4, 0.5, 2.8, 3),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_tbhp6"]
+_data = {
+"RESET": SubResource("Animation_cx41a"),
+"run": SubResource("Animation_7un2e")
+}
+
+[node name="Prompt" type="MarginContainer"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 31.0
+grow_horizontal = 2
+script = ExtResource("1_w51od")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+color = Color(0, 0, 0, 0)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+
+[node name="PromptLabel" type="Label" parent="MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_b1f6r")
+text = "(Message...)"
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="MarginContainer"]
+unique_name_in_owner = true
+libraries = {
+"": SubResource("AnimationLibrary_tbhp6")
+}
+
+[connection signal="animation_finished" from="MarginContainer/AnimationPlayer" to="." method="_on_animation_player_animation_finished"]
+[connection signal="animation_started" from="MarginContainer/AnimationPlayer" to="." method="_on_animation_player_animation_started"]

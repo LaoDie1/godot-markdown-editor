@@ -492,10 +492,16 @@ static func has_getter_or_setter(script: Script, propertys: PackedStringArray) -
 	return result
 
 
-## 初始化类的静态变量值为自身的名称。用于方便添加静态属性，作为配置 key 使用
+
+##初始化类的静态变量值为自身的名称。用于方便添加静态属性，作为配置 key 使用
 ##[br]
-##[br] - [code]script[/code] 注入的脚本或脚本类 
-##[br] - [code]return[/code] 返回注入的属性数据 
+##[br]- [code]script[/code]  注入的脚本或脚本类 
+##[br]- [code]handle_method[/code]  处理注入的方式。不传入这个参数默认设置值为对应的属性名。
+##这个方法需要接收 3 个参数:
+##[br]      - [code]script[/code] : 接收对应类的脚本
+##[br]      - [code]class_path[/code] : 类的路径
+##[br]      - [code]property[/code] : 属性名
+##[br]- [code]return[/code]  返回注入的属性名路径
 ##[br]
 ##[br]比如添加一个 [code]ConfigKey[/code] 类里面添加静态变量作为配置属性
 ##[codeblock]
@@ -506,55 +512,95 @@ static func has_getter_or_setter(script: Script, propertys: PackedStringArray) -
 ##    static var opened_files
 ##[/codeblock]
 ##可以方便的通过传入 [code]ConfigKey.Path.current_dir[/code] 作为 key 获取配置属性值
-static func init_class_static_value(script: GDScript, is_path_key: bool) -> Array:
-	var class_regex = RegEx.new()
-	class_regex.compile("^class\\s+(?<class_name>\\w+)\\s*:")
-	var var_regex = RegEx.new()
-	var_regex.compile("static\\s+var\\s+(?<var_name>\\w+)")
-	
+static func init_class_static_value(script: GDScript, handle_method: Callable = Callable()) -> Array[String]:
+	if not handle_method.is_valid():
+		handle_method = func(_script:GDScript, path:String, property:String):
+			_script.set(property, property)
+	# 处理
+	var data = ScriptUtil.analyze_class_and_static_var(script)
+	var propertys : Array[String] = []
+	__init_class_static_value(script, "", data, propertys, handle_method)
+	return propertys
+
+static func __init_class_static_value(script: GDScript, class_path: String, items: Array, propertys: Array, handle_method: Callable = Callable()):
+	var script_map = script.get_script_constant_map()
+	for item:Dictionary in items:
+		if item["type"] == "var":
+			handle_method.call(script, class_path, item["name"])
+			propertys.append(class_path + "/" + item["name"])
+		elif item["type"] == "class":
+			var sub_class_script = script_map[item["name"]]
+			__init_class_static_value(sub_class_script, class_path + "/" + item["name"], item["items"], propertys, handle_method)
+
+
+## 分析类中的静态变量
+static func analyze_class_and_static_var(script: GDScript):
 	# 分析
-	var p_name = script.new()
-	var data : Dictionary = {}
-	var last_class : String = ""
-	var last_var_list : Array
+	var data = []
 	var lines = script.source_code.split("\n")
-	var result : RegExMatch
-	data[""] = last_var_list
-	for line in lines:
-		result = class_regex.search(line)
-		if result:
-			# 类名
-			last_class = result.get_string("class_name")
-			last_var_list =[]
-			data[last_class] = last_var_list
-		else:
-			# 变量名
-			result = var_regex.search(line)
-			if result:
-				var var_name = result.get_string("var_name")
-				if last_class != "":
-					last_var_list.append(var_name)
-				else:
-					data[""].append(var_name)
+	__analyze_class_and_static_var (lines, 0, -1, data, "")
 	
-	# 设置值
-	var propety_map : Dictionary = {}
-	var const_map = script.get_script_constant_map()
-	var object : Object
-	for c_name:String in data:
-		if c_name == "":
-			object = script.new()
+	return data
+
+static var class_regex : RegEx:
+	get:
+		if class_regex == null:
+			class_regex = RegEx.new()
+			class_regex.compile("(?<indent>\\s*)class\\s+(?<class_name>\\w+)\\s*:")
+		return class_regex
+static var var_regex : RegEx:
+	get:
+		if var_regex == null:
+			var_regex = RegEx.new()
+			var_regex.compile("(?<indent>\\s*)static\\s+var\\s+(?<var_name>\\w+)")
+		return var_regex
+
+static func __analyze_class_and_static_var(code_lines: Array, p_line: int, parent_indent: int, data: Array, parent_class: String) -> int:
+	var class_result: RegExMatch
+	var class_indent: int
+	var _class_name : String
+	var var_result: RegExMatch
+	var var_indent: int 
+	var var_name: String
+	var line : String
+	while p_line < code_lines.size():
+		line = code_lines[p_line]
+		var_result = var_regex.search(line)
+		if var_result:
+			var_indent = var_result.get_string("indent").length()
+			if var_indent < parent_indent:
+				return p_line - 1
+			var_name = var_result.get_string("var_name")
+			data.append({
+				"type": "var",
+				"name": var_name,
+				"line": p_line,
+			})
+			
 		else:
-			object = const_map[c_name].new()
-		var property_list = data[c_name]
-		for property in property_list:
-			if is_path_key:
-				object[property] = StringName("/" + c_name + "/" + property)
-			else:
-				object[property] = StringName(property)
-			propety_map[object[property]] = null
-	propety_map.erase(null)
-	return propety_map.keys()
+			class_result = class_regex.search(line)
+			if class_result:
+				class_indent = class_result.get_string("indent").length()
+				_class_name = class_result.get_string("class_name")
+				
+				if parent_indent < class_indent:
+					# 这个类的信息
+					var items : Array = []
+					data.append({
+						"type": "class",
+						"name": _class_name,
+						"items": items,
+						"line": p_line,
+					})
+					# 继续向下执行
+					p_line = __analyze_class_and_static_var(code_lines, p_line + 1, class_indent, items, _class_name)
+				else:
+					# 必须在父级缩进之后，返回执行到的位置，让上级继续执行这一行
+					return p_line - 1
+					
+		p_line += 1
+	return p_line
+
 
 
 

@@ -73,7 +73,7 @@ static func json_to_object(json: String, _class) -> Object:
 
 
 ## 格式化输出
-static func print_stringify(data, indent: String = "", sort_keys: bool = true, full_precision: bool = false) -> void:
+static func print_stringify(data, indent: String = "\t", sort_keys: bool = true, full_precision: bool = false) -> void:
 	if data is Object:
 		data = object_to_dict(data)
 	print(JSON.stringify(data, indent, sort_keys, full_precision))

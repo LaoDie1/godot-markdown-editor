@@ -9,84 +9,67 @@
 extends Node
 
 
-var data_file : DataFile = DataFile.instance(
-	OS.get_config_dir().path_join("Godot/Markdown Editor/.config.data"),
-	DataFile.BYTES, 
-	{
-		
-	}
-)
-
-var font : Font
-var top_font_size : int = 14
-var font_size : int = 18
-var accent_color : Color = Color(0.7578, 0.5261, 0.2944, 1)
-var text_color : Color = Color(0,0,0,0.8)
-var line_spacing : float = 2
-var opened_file_paths : Array = []
+var data_file : DataFile
+var bind_property_list : Array[BindPropertyItem] = []
 
 
 #============================================================
 #  内置
 #============================================================
 func _init():
-	ScriptUtil.init_class_static_value(ConfigKey, true)
-	Engine.get_main_loop().auto_accept_quit = false
-	_init_config()
+	var default_value : Dictionary = {
+		"font_size": 18,
+		"accent_color": Color(0.7578, 0.5261, 0.2944, 1),
+		"text_color": Color(1,1,1,0.8),
+		"font_color": Color(1,1,1,0.9),
+		"line_spacing": 8,
+		"current_dir": "",
+		"opened_files": {},
+	}
+	var data_file_path : String = OS.get_config_dir().path_join("Godot/MarkdownEditor/.config.data")
+	data_file = DataFile.instance(data_file_path, DataFile.BYTES, default_value)
+	
+	## TEST
+	#data_file.data.clear()
+	#data_file.data = default_value
+	
+	# 设置配置属性
+	ScriptUtil.init_class_static_value(ConfigKey, 
+		func(script:GDScript, path, property: String):
+			# 可绑定属性
+			var property_item = BindPropertyItem.new(property)
+			property_item.update( data_file.get_value(property) )
+			property_item.bind_method(func(value):
+				data_file.set_value(property, value)
+			)
+			bind_property_list.append(property_item)
+			# 设置到这个脚本类中
+			script.set(property, property_item)
+	)
+
 
 func _enter_tree() -> void:
 	if Engine.get_main_loop().current_scene is Control:
-		font = Engine.get_main_loop().current_scene.get_theme_default_font()
+		var font : Font = Engine.get_main_loop().current_scene.get_theme_default_font()
+		ConfigKey.Display.font.update( font )
+	Engine.get_main_loop().auto_accept_quit = false
+	
+	ConfigKey.Display.line_spacing.update(8)
+	ConfigKey.Display.font_path.update("")
 
-func _exit_tree() -> void:
-	print("exit")
 
 func _notification(what):
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_WM_GO_BACK_REQUEST:
-		_update_config()
 		data_file.save()
+		JsonUtil.print_stringify(data_file.get_data())
+		
+		await Engine.get_main_loop().process_frame
 		Engine.get_main_loop().quit.call_deferred(0)
 
 
-
-#============================================================
-#  自定义
-#============================================================
-var _config_propertys : Array = [
-	"top_font_size", "font_size", "accent_color", "text_color", "line_spacing",
-]
-
-func _init_config():
-	var propertys = DataUtil.array_to_dictionary( ScriptUtil.get_property_name_list(get_script()) )
-	
-	for property in _config_propertys:
-		if data_file.has_value(property):
-			self[property] = data_file.get_value(property)
-	opened_file_paths = get_opened_files()
-
-
-func _update_config():
-	set_value(ConfigKey.Path.opened_files, opened_file_paths)
-	for property in _config_propertys:
-		data_file.set_value(property, self[property])
-
-
-func get_value(path: String, default = null):
-	return data_file.get_value(path, default)
-
-
-func set_value(path: String, value):
-	data_file.set_value(path, value)
-
-
-func add_opened_file(file_path: String) -> bool:
-	if not opened_file_paths.has(file_path):
-		opened_file_paths.append(file_path)
-		set_value(ConfigKey.Path.opened_files, opened_file_paths)
+func add_open_file(path) -> bool:
+	var dict = ConfigKey.Path.opened_files.value()
+	if not dict.has(path):
+		dict[path] = null
 		return true
 	return false
-
-
-func get_opened_files() -> Array:
-	return get_value(ConfigKey.Path.opened_files, [])
-

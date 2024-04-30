@@ -361,6 +361,12 @@ static func make_dir_if_not_exists(dir_path: String) -> bool:
 static func shell_open(path: String) -> void:
 	if path.begins_with("res://") or path.begins_with("user://"):
 		path = get_real_path(path)
+	if FileAccess.file_exists(path):
+		if OS.get_name() == "Windows":
+			# 路径不替换为 \ 会执行失败
+			var command = 'explorer.exe /select,"%s"' % path.replace("/", "\\")
+			OS.execute("cmd.exe", ["/C", command])
+			return
 	OS.shell_open(path)
 
 
@@ -422,9 +428,6 @@ static func rename(from: String, to: String) -> Error:
 		return ERR_FILE_BAD_PATH
 	return DirAccess.rename_absolute(from, to)
 
-
-
-
 ## 获取文件修改时间时间戳
 static func get_file_modified_time(path: String) -> int:
 	return FileAccess.get_modified_time(path)
@@ -435,3 +438,23 @@ static func get_file_length(path: String) -> int:
 	if file:
 		return file.get_length()
 	return 0
+
+
+
+const BYTE_QUANTITIES: Array[int] = [
+	1e3, # KB
+	1e6, # MB
+	1e9, # GB
+]
+
+enum SizeFlag {
+	KB,
+	MB,
+	GB
+}
+
+## 获取文件大小
+static func get_file_size(path: String, size_flag: int) -> float:
+	var length = get_file_length(path)
+	return (length / BYTE_QUANTITIES[size_flag])
+

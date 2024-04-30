@@ -6,7 +6,6 @@
 # - version: 4.3.0.dev5
 #============================================================
 ## 绘制文档中的内容
-class_name DocumentCanvas
 extends Control
 
 

@@ -72,7 +72,7 @@ clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="DocCanvas" type="Control" parent="HSplitContainer/HBoxContainer/CanvasContainer"]
+[node name="DocumentCanvas" type="Control" parent="HSplitContainer/HBoxContainer/CanvasContainer"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
@@ -80,6 +80,18 @@ anchor_right = 1.0
 offset_bottom = 1000.0
 grow_horizontal = 2
 script = ExtResource("2_ppuf1")
+
+[node name="ReferenceRect" type="ReferenceRect" parent="HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+border_width = 2.0
+editor_only = false
 
 [node name="TextEdit" type="TextEdit" parent="HSplitContainer/HBoxContainer/CanvasContainer"]
 unique_name_in_owner = true
@@ -95,8 +107,8 @@ theme = SubResource("Theme_wx15x")
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_selected_color = Color(1, 0.998169, 0.882813, 1)
 theme_override_colors/caret_color = Color(0, 0, 0, 0.65098)
-theme_override_constants/outline_size = 0
 theme_override_constants/line_spacing = 0
+theme_override_constants/outline_size = 0
 theme_override_constants/caret_width = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_a7m7v")
 theme_override_styles/focus = SubResource("StyleBoxFlat_708mh")
@@ -112,22 +124,16 @@ step = 100.0
 page = 100.0
 custom_step = 50.0
 
-[node name="ScrollUpdateTimer" type="Timer" parent="HSplitContainer/HBoxContainer"]
-unique_name_in_owner = true
-wait_time = 0.08
-one_shot = true
-
 [node name="Debug" type="TextEdit" parent="HSplitContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 wrap_mode = 1
 script = ExtResource("3_qbf4f")
 
-[connection signal="clicked_line" from="HSplitContainer/HBoxContainer/CanvasContainer/DocCanvas" to="." method="edit_line"]
-[connection signal="clicked_line" from="HSplitContainer/HBoxContainer/CanvasContainer/DocCanvas" to="HSplitContainer/Debug" method="show_debug"]
-[connection signal="gui_input" from="HSplitContainer/HBoxContainer/CanvasContainer/DocCanvas" to="." method="_on_doc_canvas_gui_input"]
-[connection signal="height_changed" from="HSplitContainer/HBoxContainer/CanvasContainer/DocCanvas" to="." method="_on_doc_canvas_height_changed"]
+[connection signal="clicked_line" from="HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="." method="edit_line"]
+[connection signal="clicked_line" from="HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="HSplitContainer/Debug" method="show_debug"]
+[connection signal="gui_input" from="HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="." method="_on_doc_canvas_gui_input"]
+[connection signal="height_changed" from="HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="." method="_on_doc_canvas_height_changed"]
 [connection signal="gui_input" from="HSplitContainer/HBoxContainer/CanvasContainer/TextEdit" to="." method="_on_text_edit_gui_input"]
 [connection signal="visibility_changed" from="HSplitContainer/HBoxContainer/CanvasContainer/TextEdit" to="." method="_on_text_edit_visibility_changed"]
 [connection signal="value_changed" from="HSplitContainer/HBoxContainer/VScrollBar" to="." method="_on_v_scroll_bar_value_changed"]
-[connection signal="timeout" from="HSplitContainer/HBoxContainer/ScrollUpdateTimer" to="." method="_on_scroll_update_timer_timeout"]

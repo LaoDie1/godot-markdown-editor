@@ -13,6 +13,6 @@ func _run() -> void:
 	pass
 	
 	var text = "你好 hello <https://aaa/> ![img](/test/img.png)  ~~aaa~~ [百度](www.baidu.com) "
-	var results = Block.handle_block(text)
+	var results = BlockType.handle_block(text)
 	JsonUtil.print_stringify( results , "\t")
 

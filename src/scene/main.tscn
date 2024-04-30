@@ -1,14 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://cn2d275vihbnj"]
+[gd_scene load_steps=5 format=3 uid="uid://cn2d275vihbnj"]
 
 [ext_resource type="Script" path="res://src/scene/main.gd" id="1_5283d"]
 [ext_resource type="Script" path="res://addons/simplemenu/simple_menu.gd" id="1_s2vjw"]
 [ext_resource type="PackedScene" uid="uid://cnagm0ae3yv72" path="res://src/scene/editor/markdown_edit.tscn" id="3_dylv3"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_al0ie"]
-bg_color = Color(1, 0.991272, 0.898438, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2f865"]
-bg_color = Color(0.953125, 0.934013, 0.848877, 1)
+[ext_resource type="PackedScene" uid="uid://cvq1itqxgbryv" path="res://src/scene/prompt/prompt.tscn" id="4_ef3uh"]
 
 [node name="Main" type="Control"]
 texture_filter = 1
@@ -24,7 +19,7 @@ script = ExtResource("1_5283d")
 unique_name_in_owner = true
 title = "Open a File"
 size = Vector2i(345, 159)
-ok_button_text = "Open"
+ok_button_text = "打开"
 file_mode = 0
 access = 2
 filters = PackedStringArray("*.md;Markdown File", "*.txt;Text File")
@@ -39,7 +34,7 @@ unique_name_in_owner = true
 title = "Open a Directory"
 position = Vector2i(100, 100)
 size = Vector2i(700, 500)
-ok_button_text = "Select Current Folder"
+ok_button_text = "选择当前文件夹"
 file_mode = 2
 access = 2
 
@@ -50,7 +45,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_al0ie")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -72,11 +66,6 @@ theme_override_constants/separation = 0
 unique_name_in_owner = true
 layout_mode = 2
 focus_mode = 1
-theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
-theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
-theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
-theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
-theme_override_colors/font_color = Color(0, 0, 0, 1)
 flat = true
 script = ExtResource("1_s2vjw")
 
@@ -95,11 +84,7 @@ layout_mode = 2
 [node name="FileItemList" type="ItemList" parent="MarginContainer/VBoxContainer/HSplitContainer/Left"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_selected_color = Color(0.046875, 0.046875, 0.046875, 1)
-theme_override_colors/font_color = Color(0.394531, 0.394531, 0.394531, 1)
-theme_override_colors/font_hovered_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 18
-theme_override_styles/panel = SubResource("StyleBoxFlat_2f865")
 fixed_icon_size = Vector2i(24, 24)
 
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/HSplitContainer"]
@@ -112,38 +97,50 @@ layout_mode = 2
 [node name="HSplitContainer" type="HSplitContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MarginContainer/Right"]
 layout_mode = 2
 size_flags_vertical = 3
+split_offset = -300
 
-[node name="MarkdownEdit" parent="MarginContainer/VBoxContainer/HSplitContainer/MarginContainer/Right/HSplitContainer" instance=ExtResource("3_dylv3")]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MarginContainer/Right/HSplitContainer"]
+layout_mode = 2
+
+[node name="ColorRect" type="ColorRect" parent="MarginContainer/VBoxContainer/HSplitContainer/MarginContainer/Right/HSplitContainer/MarginContainer"]
+visible = false
+layout_mode = 2
+
+[node name="MarkdownEdit" parent="MarginContainer/VBoxContainer/HSplitContainer/MarginContainer/Right/HSplitContainer/MarginContainer" instance=ExtResource("3_dylv3")]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+metadata/_edit_group_ = true
 
-[node name="TextEdit" type="MarginContainer" parent="MarginContainer/VBoxContainer/HSplitContainer/MarginContainer/Right/HSplitContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 0
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 0
+[node name="ReferenceRect" type="ReferenceRect" parent="MarginContainer/VBoxContainer/HSplitContainer/MarginContainer/Right/HSplitContainer/MarginContainer/MarkdownEdit"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+border_width = 2.0
+editor_only = false
 
-[node name="DocumentTextEdit" type="TextEdit" parent="MarginContainer/VBoxContainer/HSplitContainer/MarginContainer/Right/HSplitContainer/TextEdit"]
+[node name="DocumentTextEdit" type="TextEdit" parent="MarginContainer/VBoxContainer/HSplitContainer/MarginContainer/Right/HSplitContainer"]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 wrap_mode = 1
 
-[node name="DebugEditor" type="TextEdit" parent="MarginContainer/VBoxContainer/HSplitContainer/MarginContainer/Right"]
-unique_name_in_owner = true
-visible = false
-custom_minimum_size = Vector2(0, 200)
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-editable = false
-wrap_mode = 1
-autowrap_mode = 1
 
-[connection signal="file_selected" from="OpenFileDialog" to="." method="open_file"]
+[node name="Prompt" parent="MarginContainer/VBoxContainer/PanelContainer" instance=ExtResource("4_ef3uh")]
+layout_mode = 2
+
+[connection signal="file_selected" from="OpenFileDialog" to="." method="_on_open_file_dialog_file_selected"]
 [connection signal="visibility_changed" from="OpenFileDialog" to="." method="_on_open_file_dialog_visibility_changed"]
-[connection signal="file_selected" from="SaveFileDialog" to="." method="save_file"]
+[connection signal="file_selected" from="SaveFileDialog" to="." method="_on_save_file_dialog_file_selected"]
 [connection signal="dir_selected" from="ScanFilesDialog" to="." method="_on_scan_files_dialog_dir_selected"]
+[connection signal="menu_check_toggled" from="MarginContainer/VBoxContainer/Menu" to="." method="_on_menu_menu_check_toggled"]
 [connection signal="menu_pressed" from="MarginContainer/VBoxContainer/Menu" to="." method="_on_menu_menu_pressed"]
 [connection signal="item_selected" from="MarginContainer/VBoxContainer/HSplitContainer/Left/FileItemList" to="." method="_on_file_item_list_item_selected"]

@@ -5,10 +5,13 @@
 # - datetime: 2024-04-22 13:30:22
 # - version: 4.3.0.dev5
 #============================================================
+## 行
+##
+##创建出来时默认加载字符串的行高，等实际加载显示这个行时，再去计算行高。
 class_name LineItem
 
 
-signal line_height_changed
+signal height_changed(previous, current)
 
 
 ## 绘制的文字断行方式
@@ -22,69 +25,63 @@ static var _incr_id : int = -1 # 自增行。每次创建一个当前类的对�
 
 # TODO 下面存在子节点行，并进行处理（待添加）
 var children: Array[LineItem]
-var previous_line: LineItem 
-var next_line: LineItem 
 
-
-## 唯一ID
-var id : int = -1
-## 原始字符串
-var origin_text : String = ""
-## 显示出来的字符串
-var text : String = ""
-## 行类型
-var type : int = LineType.Error
-## 画布所在的 y 轴点
-var line_y_point : int = 0
-## 文本对齐方式
-var alignment : int = HORIZONTAL_ALIGNMENT_LEFT
-## 字体大小
-var font_size : int = 16
-## 字体颜色
-var font_color : Color = Color(1,1,1,1)
-## 边距
-var margin : Margin = Margin.new()
-## 字体
-var font : Font
-
-## 文字数据块 # TODO 后续绘制时如果为空，则懒加载数据块
-var blocks : Array[Block] = []
-## 文件所在路径
-var file_path : String = ""
-
-# 空白缩进
-var _indent : int = 0
-# 计算好的高度缓存
-var _line_height : int = 0: # 需要在 handle 中预先计算好
+var id : int = -1 ## 唯一ID
+var origin_text : String: ## 原始字符串
 	set(v):
-		if v != 0 and _line_height != v:
-			_line_height = v
-			line_height_changed.emit()
+		if origin_text != v:
+			origin_text = v
+			_text = v
+			update_status = false
+			text_block_update_status = false
+var type : int = LineType.Normal ## 行类型
+var offset_y : int ## 画布所在的 y 轴点
+var alignment : int = HORIZONTAL_ALIGNMENT_LEFT ## 文本对齐方式
+var font : Font ## 字体
+var font_size : int = 16 ## 字体大小
+var font_color : Color = Color(1,1,1,1) ## 字体颜色
+var margin : Margin = Margin.new() ## 边距
 
-# 当前标签图片
-var _image : Texture2D
-var _last_width : int = -1
+var document : Document
+var blocks : Array[BlockType] = [] ## 文字数据块 # TODO 后续绘制时如果为空，则懒加载数据块
+var view_status : bool = false: ## 在视线中的状态
+	set(v):
+		if view_status != v:
+			view_status = v
+			if view_status and not update_status:
+				update_status = true
+				handle_markdown()
+var update_status : bool = false ## 是否更新过内容
+var text_block_update_status : bool = false ## 文本块更新状态
+
+
+var _text : String # 显示出来的字符串
+var _image : Texture2D: # 当前标签图片
+	set(v):
+		if _image != v:
+			_image = v
+			update_status = false
+var _line_height : int: # 高度缓存
+	set(v):
+		if _line_height != v:
+			var previous = _line_height
+			_line_height = v
+			height_changed.emit(previous, v)
 
 
 #============================================================
 #  Standard
 #============================================================
-func _init(text: String, params: Dictionary = {}):
+func _init(params: Dictionary):
 	_incr_id += 1
-	
 	self.id = _incr_id
-	self.origin_text = text
-	self.text = text
-	if not Engine.is_editor_hint():
-		font = Config.font
-		font_size = Config.font_size
-		font_color = Config.text_color
-	
-	# 自动设置参数
-	if not params.is_empty():
-		for p in params:
-			if p in self:
-				self[p] = params[p]
+	font = ConfigKey.Display.font.value()
+	#font = Engine.get_main_loop().current_scene.get_theme_default_font()
+	font_size = ConfigKey.Display.font_size.value()
+	font_color = ConfigKey.Display.text_color.value()
+	for p in params:
+		self[p] = params[p]
+	self._line_height = get_text_height()
 
 
 #============================================================
@@ -93,65 +90,22 @@ func _init(text: String, params: Dictionary = {}):
 static func reset_incr_id() -> void:
 	LineItem._incr_id = -1
 
-static func create(previous: LineItem, text: String = "") -> LineItem:
-	var line : LineItem = LineItem.new(text)
-	line.previous_line = previous
-	if previous:
-		previous.next_line = line
-	return line
-
-## 向前寻找。如果 method 返回结果值为 [code]true[/code] 则停止寻找
-func find_previous(method: Callable) -> LineItem:
-	var curr : LineItem = next_line
-	var result
-	while curr:
-		result = method.call(curr)
-		if result is bool and result:
-			return curr
-		curr = curr.next_line
-	return curr
-
-## 向后寻找。如果 method 返回结果值为 [code]true[/code] 则停止寻找
-func find_next(method: Callable) -> LineItem:
-	var curr : LineItem = next_line
-	var result
-	while curr:
-		result = method.call(curr)
-		if result is bool and result:
-			return curr
-		curr = curr.next_line
-	return curr
-
-## 向前遍历。如果有终止条件，请使用 [method find_previous] 方法
-func for_previous(method: Callable) -> void:
-	var curr = previous_line
-	while curr:
-		method.call(curr)
-		curr = curr.previous_line
-
-## 向后遍历。如果有终止条件，请使用 [method find_next] 方法
-func for_next(method: Callable) -> void:
-	var curr = next_line
-	while curr:
-		method.call(curr)
-		curr = curr.next_line
-
 ## 获取计算后的行高
 func get_line_height() -> int:
 	return _line_height
 
 ## 获取当前字符串总高度（包括换行高度）
-func get_text_height(width : int) -> int:
-	assert(type != LineType.Error, "还没有设置行的类型")
+func get_text_height() -> int:
+	#assert(type != LineType.Error, "还没有设置行的类型")
 	if type == LineType.ImageUrl:
 		return _line_height + margin.top + margin.bottom
-	return get_height_by_text(text, width)
+	return get_height_by_text(_text)
 
 ## 获取这个字符串的总高度
-func get_height_by_text(t: String, width: int) -> int:
+func get_height_by_text(t: String) -> int:
 	if t.strip_edges() == "":
 		return get_height_of_one_line()
-	var text_width : int = width - margin.left - margin.right
+	var text_width : int = document.width - margin.left - margin.right
 	return (
 		font.get_multiline_string_size(t, alignment, text_width, font_size, -1, TEXT_BREAK_MODE).y 
 		+ margin.top 
@@ -171,17 +125,17 @@ func get_font_height() -> int:
 
 ## 获取字符串换行后的子行
 func get_sub_line(point: Vector2) -> int:
-	return ceili( (point.y - line_y_point) / get_height_of_one_line() )
+	return ceili( (point.y - offset_y) / get_height_of_one_line() )
 
 ## 获取在画布上的 Rect
-func get_rect(width: int) -> Rect2:
-	var pos = Vector2(0, line_y_point)
-	var size = Vector2( width, get_line_height())
+func get_rect() -> Rect2:
+	var pos = Vector2(0, offset_y)
+	var size = Vector2( document.width, get_line_height())
 	return Rect2(pos, size)
 
 ## 获取内容的 Rect
-func get_content_rect(width: int) -> Rect2:
-	var rect = get_rect(width)
+func get_content_rect() -> Rect2:
+	var rect = get_rect()
 	rect.position.x += margin.left
 	rect.position.y += margin.top
 	rect.size.x -= margin.left - margin.right
@@ -192,37 +146,26 @@ func get_content_rect(width: int) -> Rect2:
 #============================================================
 #  操作
 #============================================================
-## 根据文件类型操作处理 TODO 后续删除这个方法
-func handle_by_path(file_path: String, width: int) -> void:
-	if text == "":
-		text = origin_text
-	handle_markdown(width)
-
-
 ## 处理 markdown 字符串行
-func handle_markdown(width: int) -> void:
-	_last_width = width
-	assert(_last_width != -1, "没有设置页面宽度")
-	
+func handle_markdown() -> void:
 	# 初始化属性
-	text = origin_text
+	_text = origin_text
 	type = LineType.Normal
 	margin = Margin.new()
 	margin.left = 8
-	_line_height = 0
 	if not Engine.is_editor_hint():
-		font_size = Config.font_size
+		font_size = ConfigKey.Display.font_size.value()
 	
 	var info = LineType.get_markdown_line_info(origin_text)
 	self.type = info["type"]
-	self.text = info["text"]
+	self._text = info["text"]
 	match type:
 		LineType.Tile_Larger:
-			font_size = 32
+			font_size = font_size * 2
 		LineType.Tile_Medium:
-			font_size = 28
+			font_size = font_size * 1.65
 		LineType.Tile_Small:
-			font_size = 24
+			font_size = font_size * 1.25
 		LineType.Quote:
 			margin.left = 16
 			margin.top = 8
@@ -234,13 +177,13 @@ func handle_markdown(width: int) -> void:
 			margin.left = 2
 			margin.bottom = 8
 			
-			text = ""
+			_text = ""
 			var lines = origin_text.split("\n")
 			for i in range(1, lines.size()-1):
-				text += lines[i] + "\n"
+				_text += lines[i] + "\n"
 			margin.left = 16
 		LineType.SeparationLine:
-			text = ""
+			_text = ""
 		LineType.ImageUrl:
 			_image = null
 			# 请求这个图片
@@ -253,13 +196,19 @@ func handle_markdown(width: int) -> void:
 					_line_height = get_height_of_one_line()
 			)
 			return
+			
 		LineType.Normal:
 			pass
+			
 		_:
 			printerr("其他类型：", type, "  ", info.get("tag"))
 	
+	#if type != LineType.Code and not text_block_update_status:
+		## TODO 文本段落
+		#BlockType.handle_block(origin_text)
+	
 	# 行高
-	_line_height = get_text_height( width )
+	_line_height = get_text_height()
 
 
 # 处理图片 URL。这个 [code]callback[/code] 回调方法需要有一个 [Image] 类型的参数接收返回的图片 
@@ -288,20 +237,17 @@ func _handle_image_url(url: String, callback: Callable):
 		var path : String = url
 		if not path.begins_with("/"):
 			# 相对路径，这个文件下的同级路径
-			path = file_path.get_base_dir().path_join(url)
+			path = document.file_path.get_base_dir().path_join(url)
 		callback.call( Image.load_from_file(path) )
 
 
-
-#============================================================
-#  绘制
-#============================================================
-## 绘制到这个节点上。需要更新计算高度
+## 绘制到这个节点上。（这时开始计算实际高度）
 ##[br]
 ##[br]- [code]canvas[/code]  绘制到的目标画布
-##[br]- [code]width[/code]  整体宽度
-func draw_to(canvas: CanvasItem, width: int):
-	var line_rect : Rect2 = get_rect(width)
+func draw_to(canvas: CanvasItem):
+	view_status = true
+	
+	var line_rect : Rect2 = get_rect()
 	line_rect.position.x += 1
 	line_rect.size.x -= 1
 	match type:
@@ -316,7 +262,7 @@ func draw_to(canvas: CanvasItem, width: int):
 		LineType.SeparationLine:
 			# 线条居中
 			var y : int = line_rect.position.y + line_rect.size.y / 2
-			canvas.draw_line( Vector2(0, y), Vector2(width, y), Color(0,0,0,0.15), 1)
+			canvas.draw_line( Vector2(0, y), Vector2(document.width, y), Color(0,0,0,0.15), 1)
 			return
 			
 		LineType.Code:
@@ -332,21 +278,16 @@ func draw_to(canvas: CanvasItem, width: int):
 		
 		LineType.ImageUrl:
 			if _image:
-				var content_rect = get_content_rect(width)
+				var content_rect = get_content_rect()
 				canvas.draw_texture(_image, content_rect.position)
 				return
 	
-	# TODO 懒加载块
-	#if blocks.is_empty() and type != LineType.Code:
-		#blocks = BlockType.handle_block(text)
-		
-		#var items = blocks.map(func(block: Block): return block.format_code(0))
-		#print(items) # 输出测试
+	# TODO 懒加载 文本块Block
 	
-	if text:
-		var content_rect = get_content_rect(width)
+	if _text:
+		var content_rect = get_content_rect()
 		var text_width : int = content_rect.size.x
 		var text_pos : Vector2 = content_rect.position
 		text_pos.y += get_font_height() - 2 # 需要向下偏移一点距离
-		canvas.draw_multiline_string(font, text_pos, text, alignment, text_width, font_size, -1, font_color, TEXT_BREAK_MODE)
+		canvas.draw_multiline_string(font, text_pos, _text, alignment, text_width, font_size, -1, font_color, TEXT_BREAK_MODE)
 

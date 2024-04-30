@@ -1,12 +1,12 @@
 #============================================================
-#    Block
+#    Block Type
 #============================================================
 # - author: zhangxuetu
 # - datetime: 2024-04-26 20:42:52
 # - version: 4.3.0.dev5
 #============================================================
 # 数据块
-class_name Block
+class_name BlockType
 
 
 enum Type {
@@ -32,6 +32,7 @@ class BlockRegex:
 		)
 
 static var block_regex : BlockRegex = BlockRegex.new()
+
 
 ## 处理文本块（代码块则不需要调用）
 static func handle_block(text: String) -> Array:
