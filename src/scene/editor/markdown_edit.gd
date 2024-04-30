@@ -100,9 +100,20 @@ func edit_line(line: LineItem):
 
 ## 插入行
 func insert_line(from:LineItem, text: String) -> LineItem:
-	var line =  document_canvas.insert_line(from, text)
+	var line =  document_canvas.document.insert_line(from, text)
+	document_canvas.redraw()
 	edit_line(line)
 	return line
+
+
+func remove_line(line: LineItem):
+	var previous = document_canvas.document.line_linked_list.get_previous(line)
+	if previous:
+		if document_canvas.document.remove_line(line):
+			document_canvas.redraw()
+			edit_line(previous)
+			text_edit.set_caret_column(text_edit.text.length())
+	
 
 
 
@@ -150,47 +161,15 @@ func _on_text_edit_gui_input(event: InputEvent) -> void:
 		elif InputUtil.is_key(event, KEY_ESCAPE):
 			text_edit.hide()
 			
-			
-				#var new_idx : int = _selected_line_idx + 1
-				#var text : String = ""
-				#if _selected_line_item.type == LineType.UnorderedList:
-					#text = "- "
-				#var new_line_item : LineItem = _insert_line(new_idx, text)
-				#
-				## 更新后面行的偏移
-				#var offset : float = new_line_item.get_height_of_one_line()
-				#_update_line_after_pos(new_idx, offset)
-				#
-				#_update_selected_line(true)
-				#
-				#FuncUtil.execute_deferred(func():
-					## 选中这个行
-					#_selected_line_item = new_line_item
-					#_edit_line(new_line_item)
-					#print("Edit: ", _selected_line_idx )
-				#)
-			#
-		#
-		#elif InputUtil.is_key(event, KEY_BACKSPACE):
-			#if (text_edit.get_selected_text() == "" 
-				#and text_edit.get_caret_column() == 0 
-				#and text_edit.get_caret_line() == 0
-			#):
-				#var selected_line_idx : int = _selected_line_idx
-				#if selected_line_idx > 0:
-					#Engine.get_main_loop().root.set_input_as_handled()
-					#var previous_line : LineItem = line_items[selected_line_idx - 1]
-					#var text_count : int = previous_line.origin_text.length()
-					#_delete_line(_selected_line_idx)
-					#queue_redraw()
-					#
-					#FuncUtil.execute_deferred(
-						#func():
-							#_selected_line_item = previous_line
-							#_edit_line(_selected_line_item)
-							#text_edit.set_caret_column(text_count)
-					#)
-				#
+		elif InputUtil.is_key(event, KEY_BACKSPACE):
+			if (text_edit.get_selected_text() == "" 
+				and text_edit.get_caret_column() == 0 
+				and text_edit.get_caret_line() == 0
+			):
+				Engine.get_main_loop().root.set_input_as_handled()
+				if _selected_line_item:
+					remove_line(_selected_line_item)
+				
 			#else:
 				## 延迟调用
 				#if _selected_line_item:

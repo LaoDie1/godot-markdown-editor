@@ -93,9 +93,3 @@ func update_document():
 	size.y = document.get_document_height()
 	queue_redraw()
 
-
-## 插入新的行。全部插入后调用 [method update_document] 进行更新
-func insert_line(from: LineItem, text: String) -> LineItem:
-	var line = document.insert_line(from, text)
-	redraw()
-	return line

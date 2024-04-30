@@ -22,11 +22,9 @@ var width : int: ## 文档宽度
 			line.update_status = false
 			line.view_status = false
 var file_path: String
+var line_linked_list : TwowayLinkedList = TwowayLinkedList.new() # 所有行
 
-
-var _lines : TwowayLinkedList = TwowayLinkedList.new() # 所有行
 var _document_height : int = 0 # 文档高度
-
 var _last_offset_y : int = 0
 var _page_first_line : Dictionary = {} # 分页，每页第一个行
 
@@ -48,15 +46,15 @@ func _init(width: int, file_path: String) -> void:
 #============================================================
 ## 获取所有行
 func get_lines() -> Array[LineItem]:
-	return Array(_lines.get_list(), TYPE_OBJECT, "RefCounted", LineItem)
+	return Array(line_linked_list.get_list(), TYPE_OBJECT, "RefCounted", LineItem)
 
 ## 获取第一行
 func get_first_line() -> LineItem:
-	return _lines.get_first()
+	return line_linked_list.get_first()
 
 ## 获取最后一行
 func get_last_line() -> LineItem:
-	return _lines.get_last()
+	return line_linked_list.get_last()
 
 ## 获取文档字符
 func get_text() -> String:
@@ -93,23 +91,23 @@ func get_line_by_point(point: Vector2) -> LineItem:
 	var start_line : LineItem = get_group_line(point.y)
 	if start_line:
 		if start_line.offset_y > point.y:
-			var previous = _lines.get_previous(start_line)
+			var previous = line_linked_list.get_previous(start_line)
 			if previous:
 				return previous
 			return start_line
 		
 		var last_line = [null] # 必须用引用类型的数据，否则匿名函数中会赋值不上
-		var mouse_line : LineItem = _lines.find_next(start_line, func(line: LineItem):
+		var mouse_line : LineItem = line_linked_list.find_next(start_line, func(line: LineItem):
 			last_line[0] = line
 			# 在鼠标位置范围内
-			var previous : LineItem = _lines.get_previous(line)
+			var previous : LineItem = line_linked_list.get_previous(line)
 			if (previous.offset_y <= point.y
 				and line.offset_y >= point.y
 			):
 				return true
 		)
 		if mouse_line:
-			return _lines.get_previous(mouse_line)
+			return line_linked_list.get_previous(mouse_line)
 		else:
 			if last_line[0]:
 				return last_line[0]
@@ -120,10 +118,11 @@ func get_line_by_point(point: Vector2) -> LineItem:
 ## 获取行
 func get_line(idx: int) -> LineItem:
 	assert(idx >= 0, "行索引值必须超过 0")
+	# TODO 根据索引大小，从开始或者末尾获取
 	var i = 0
 	var last_line = get_last_line()
 	while i != idx and last_line != null:
-		last_line = _lines.get_next(last_line)
+		last_line = line_linked_list.get_next(last_line)
 		i += 1
 		if i > 1000:
 			breakpoint
@@ -156,30 +155,32 @@ func create_line(text: String, add_to_line: bool = true) -> LineItem:
 	})
 	line_item.height_changed.connect(_on_line_height_changed.bind(line_item))
 	if add_to_line:
-		_lines.append(line_item)
+		line_linked_list.append(line_item)
 	return line_item
 
 ## 插入行
 func insert_line(line_item:LineItem, text: String):
 	var new_line_item = create_line(text, false)
-	_lines.insert_after(new_line_item, line_item)
+	line_linked_list.insert_after(new_line_item, line_item)
 	new_line_item.offset_y = line_item.offset_y + line_item.get_line_height()
 	update_line_offset(new_line_item, new_line_item.get_line_height())
 	return new_line_item
 
 ## 移除行
-func remove_line(line_item: LineItem):
-	if _lines.erase(line_item):
+func remove_line(line_item: LineItem) -> bool:
+	if line_linked_list.has_object(line_item):
 		var height = line_item.get_line_height()
 		update_line_offset(line_item, -height)
-		_document_height -= height
+		line_linked_list.erase(line_item)
+		return true
+	return false
 
 ## 合并行
 func merge_line(from_line: LineItem, to_line: LineItem):
 	if from_line == null or to_line == null:
 		return
 	# 合并返回中间的行
-	var list = _lines.merge(from_line, to_line)
+	var list = line_linked_list.merge(from_line, to_line)
 	if not list.is_empty():
 		from_line.origin_text += "\n"
 		from_line.origin_text += "\n".join(list.map(func(item): return item.text ))
@@ -189,7 +190,7 @@ func merge_line(from_line: LineItem, to_line: LineItem):
 ## 更新行的偏移
 func update_line_offset(from_line: LineItem, offset: int):
 	_document_height += offset
-	_lines.for_next(from_line, func(item: LineItem):
+	line_linked_list.for_next(from_line, func(item: LineItem):
 		remove_group_line(item.offset_y, item)
 		item.offset_y += offset
 		set_group_line(item.offset_y, item)
@@ -197,7 +198,7 @@ func update_line_offset(from_line: LineItem, offset: int):
 
 ## 获取行数
 func get_line_count() -> int:
-	return _lines.get_count()
+	return line_linked_list.get_count()
 
 ## 绘制到画布。需要在 canvas 节点的 [method CanvasItem._draw] 中调用这个方法
 ##[br]根据传入的 [param canvas_offset_y] 和 [param max_height] 参数绘制一块的区域内显示的内容
@@ -213,12 +214,12 @@ func draw(canvas: CanvasItem, canvas_offset_y: int, max_height: int):
 	var current_line = get_line_by_point(Vector2(0, canvas_offset_y))
 	if not current_line:
 		return
-	var previous : LineItem = _lines.get_previous(current_line)
+	var previous : LineItem = line_linked_list.get_previous(current_line)
 	if previous != null:
 		current_line = previous
 	# 开始绘制
 	var max_offset : int = canvas_offset_y + max_height
-	_lines.for_next(current_line, func(line: LineItem):
+	line_linked_list.for_next(current_line, func(line: LineItem):
 		line.draw_to(canvas)
 		if line.offset_y >= max_offset:
 			return true

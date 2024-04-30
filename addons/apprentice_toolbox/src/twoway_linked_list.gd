@@ -28,18 +28,21 @@ func append(object):
 	last = object
 	count += 1
 
+func has_object(object) -> bool:
+	return left.has(object) or right.has(object)
 
 ## 移除
 func erase(object):
-	var previous = get_previous(object)
-	var next = get_next(object)
-	set_next(previous, next)
-	set_previous(next, previous)
-	if object == first:
-		first = next
-	elif object == last:
-		last = previous
-	if left.erase(object):
+	if has_object(object):
+		var previous = get_previous(object)
+		var next = get_next(object)
+		set_next(previous, next)
+		set_previous(next, previous)
+		if object == first:
+			first = next
+		elif object == last:
+			last = previous
+		left.erase(object)
 		right.erase(object)
 		count -= 1
 		return true
