@@ -5,14 +5,14 @@
 # - datetime: 2024-04-24 10:46:10
 # - version: 4.3.0.dev5
 #============================================================
-## 处理整个文档的行。提前计算文档高度，处理每个行
+## 处理整个文档的行。计算文档高度，处理每个行
 class_name Document
 
 
 signal height_changed
 
 
-const PAGE_HEIGHT = 300 ## 页面高度
+const PAGE_HEIGHT : int = 300 ## 页面高度
 
 
 var width : int: ## 文档宽度
@@ -21,10 +21,14 @@ var width : int: ## 文档宽度
 		for line in get_lines():
 			line.update_status = false
 			line.view_status = false
-var file_path: String
+var file_path: String = ""
 var line_linked_list : TwowayLinkedList = TwowayLinkedList.new() # 所有行
 
-var _document_height : int = 0 # 文档高度
+
+var _document_height : int: # 文档高度
+	set(v):
+		_document_height = v
+		height_changed.emit()
 var _last_offset_y : int = 0
 var _page_first_line : Dictionary = {} # 分页，每页第一个行
 
@@ -38,7 +42,12 @@ func _init(width: int, file_path: String) -> void:
 	self.width = width
 	assert(width > 0, "文档宽度大小必须超过 0！")
 	
-	init_lines(FileUtil.read_as_lines(file_path))
+	if FileAccess.file_exists(file_path):
+		init_lines(FileUtil.read_as_lines(file_path))
+	else:
+		if file_path != "":
+			Prompt.show_error("文件不存在：", [file_path])
+		init_lines([])
 
 
 #============================================================
@@ -112,20 +121,24 @@ func get_line_by_point(point: Vector2) -> LineItem:
 			if last_line[0]:
 				return last_line[0]
 			return start_line
-	return null
-
+	return line_linked_list.get_last()
 
 ## 获取行
 func get_line(idx: int) -> LineItem:
-	assert(idx >= 0, "行索引值必须超过 0")
-	# TODO 根据索引大小，从开始或者末尾获取
-	var i = 0
-	var last_line = get_last_line()
-	while i != idx and last_line != null:
-		last_line = line_linked_list.get_next(last_line)
-		i += 1
-		if i > 1000:
-			breakpoint
+	assert(idx > -1 and idx < line_linked_list.get_count(), "行索引值超出范围")
+	var last_line : LineItem
+	if idx < line_linked_list.get_count() / 2:
+		last_line = get_first_line()
+		var i : int = -1
+		while i != idx and last_line != null:
+			i += 1
+			last_line = line_linked_list.get_next(last_line)
+	else:
+		last_line = get_last_line()
+		var i : int = line_linked_list.get_count() - 1
+		while i != idx and last_line != null:
+			i -= 1
+			last_line = line_linked_list.get_previous(last_line)
 	return last_line
 
 
@@ -134,6 +147,10 @@ func get_line(idx: int) -> LineItem:
 #============================================================
 ## 初始化所有行
 func init_lines(string_lines: Array) -> void:
+	if string_lines.size() < 2:
+		for i in 2 - string_lines.size():
+			string_lines.append("")
+	
 	assert(width > 0, "文档页面宽度不能小于 0")
 	LineItem.reset_incr_id()
 	
@@ -146,6 +163,7 @@ func init_lines(string_lines: Array) -> void:
 		offset_y += line_item.get_line_height() + ConfigKey.Display.line_spacing.value(8)
 	_document_height = offset_y
 	height_changed.emit()
+
 
 ## 创建新的行（必须以这种方式 new，否则后续参数可能设置不对）
 func create_line(text: String, add_to_line: bool = true) -> LineItem:
@@ -183,7 +201,7 @@ func merge_line(from_line: LineItem, to_line: LineItem):
 	var list = line_linked_list.merge(from_line, to_line)
 	if not list.is_empty():
 		from_line.origin_text += "\n"
-		from_line.origin_text += "\n".join(list.map(func(item): return item.text ))
+		from_line.origin_text += "\n".join(list.map(func(item): return item.origin_text ))
 	else:
 		Prompt.show_error("不是 from 行的后面的行")
 
@@ -220,10 +238,26 @@ func draw(canvas: CanvasItem, canvas_offset_y: int, max_height: int):
 	# 开始绘制
 	var max_offset : int = canvas_offset_y + max_height
 	line_linked_list.for_next(current_line, func(line: LineItem):
+		line.view_status = true
+		if line.type == LineType.Code:
+			# 如果是单行的代码块
+			if not line.origin_text.contains("\n"):
+				__find_merge_code_line(line)
 		line.draw_to(canvas)
 		if line.offset_y >= max_offset:
 			return true
 	, true)
+
+func __find_merge_code_line(from_line: LineItem):
+	var next_line : LineItem = line_linked_list.get_next(from_line)
+	if next_line != null and next_line.origin_text.strip_edges() != "":
+		var space_line = [0]
+		var code_line : LineItem = line_linked_list.find_next(from_line, func(line: LineItem):
+			line.view_status = true
+			if line.type == LineType.Code:
+				return true
+		)
+		merge_line(from_line, code_line)
 
 
 

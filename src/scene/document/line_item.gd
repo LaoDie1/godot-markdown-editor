@@ -189,7 +189,7 @@ func handle_markdown() -> void:
 			# 请求这个图片
 			var url : String = info["url"]
 			_handle_image_url(url, func(image: Image):
-				if not image.is_empty():
+				if image and not image.is_empty():
 					_image = ImageTexture.create_from_image(image)
 					_line_height = image.get_size().y
 				else:
@@ -198,7 +198,8 @@ func handle_markdown() -> void:
 			return
 			
 		LineType.Normal:
-			pass
+			margin.top = 8
+			margin.bottom = 8
 			
 		_:
 			printerr("其他类型：", type, "  ", info.get("tag"))
@@ -245,7 +246,7 @@ func _handle_image_url(url: String, callback: Callable):
 ##[br]
 ##[br]- [code]canvas[/code]  绘制到的目标画布
 func draw_to(canvas: CanvasItem):
-	view_status = true
+	assert(view_status == true, "没有更新 view_status 状态为 true")
 	
 	var line_rect : Rect2 = get_rect()
 	line_rect.position.x += 1

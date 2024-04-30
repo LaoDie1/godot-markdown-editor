@@ -15,15 +15,15 @@ signal clicked_line(line: LineItem)
 signal height_changed(height: int)
 
 
-## 滚动到的位置
-@export var vertical_offset : float:
+@export var vertical_offset : float: ## 滚动到的位置
 	set(v):
 		if vertical_offset != v:
 			vertical_offset = v
 			queue_redraw()
 
-## 文档对象
-var document: Document
+
+var document: Document ## 文档对象
+var last_clicked_item : LineItem
 
 
 #============================================================
@@ -42,7 +42,9 @@ func _gui_input(event: InputEvent) -> void:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			if document:
 				var line : LineItem = document.get_line_by_point(get_local_mouse_position())
-				if line:
+				# 防止重复点击选中
+				if line and line != last_clicked_item:
+					last_clicked_item = line
 					clicked_line.emit(line)
 
 
@@ -63,13 +65,11 @@ func get_line_rect(line: LineItem) -> Rect2:
 func load_file(file_path: String) -> void:
 	document = null
 	vertical_offset = 0
-	if not FileAccess.file_exists(file_path):
-		Prompt.show_error("文件不存在：", [file_path])
-		return
 	if get_width() == 0:
 		await Engine.get_main_loop().process_frame
 	
 	# 文档对象
+	last_clicked_item = null
 	document = Document.new(get_width(), file_path)
 	document.height_changed.connect(
 		func():
@@ -78,14 +78,6 @@ func load_file(file_path: String) -> void:
 	)
 	document.height_changed.emit()
 	update_document()
-
-
-## 重绘
-func redraw():
-	# 绘制
-	queue_redraw()
-	# 立即刷新
-	force_update_transform()
 
 
 ## 更新文档内容

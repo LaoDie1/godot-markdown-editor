@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://cnagm0ae3yv72"]
 
 [ext_resource type="Script" path="res://src/scene/editor/markdown_edit.gd" id="1_747k5"]
-[ext_resource type="Script" path="res://src/scene/canvas/doc_canvas.gd" id="2_ppuf1"]
+[ext_resource type="Script" path="res://src/scene/document/document_canvas.gd" id="2_7vpx2"]
 [ext_resource type="Script" path="res://src/scene/editor/debug_edit.gd" id="3_qbf4f"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tqggp"]
@@ -33,7 +33,7 @@ VScrollBar/styles/scroll_focus = SubResource("StyleBoxEmpty_tqggp")
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_a7m7v"]
 content_margin_left = 8.0
 content_margin_top = 4.0
-bg_color = Color(1, 0.991272, 0.898438, 1)
+bg_color = Color(0.90625, 0.896515, 0.789429, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_708mh"]
 draw_center = false
@@ -41,7 +41,7 @@ border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.925781, 0.718125, 0.39418, 1)
+border_color = Color(0.992188, 0.943741, 0.798401, 1)
 
 [node name="MarkdownEdit" type="Control"]
 layout_mode = 3
@@ -54,34 +54,38 @@ script = ExtResource("1_747k5")
 show_debug = false
 metadata/_edit_lock_ = true
 
-[node name="HSplitContainer" type="HSplitContainer" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="HSplitContainer" type="HSplitContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
 split_offset = -260
 
-[node name="HBoxContainer" type="HBoxContainer" parent="HSplitContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/HSplitContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="CanvasContainer" type="Control" parent="HSplitContainer/HBoxContainer"]
+[node name="CanvasContainer" type="Control" parent="VBoxContainer/HSplitContainer/HBoxContainer"]
 clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="DocumentCanvas" type="Control" parent="HSplitContainer/HBoxContainer/CanvasContainer"]
+[node name="DocumentCanvas" type="Control" parent="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 1000.0
 grow_horizontal = 2
-script = ExtResource("2_ppuf1")
+script = ExtResource("2_7vpx2")
 
-[node name="ReferenceRect" type="ReferenceRect" parent="HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas"]
+[node name="ReferenceRect" type="ReferenceRect" parent="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas"]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -93,7 +97,7 @@ mouse_filter = 2
 border_width = 2.0
 editor_only = false
 
-[node name="TextEdit" type="TextEdit" parent="HSplitContainer/HBoxContainer/CanvasContainer"]
+[node name="TextEdit" type="TextEdit" parent="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer"]
 unique_name_in_owner = true
 layout_mode = 1
 offset_left = 59.0
@@ -117,23 +121,36 @@ autowrap_mode = 1
 scroll_fit_content_height = true
 caret_blink = true
 
-[node name="VScrollBar" type="VScrollBar" parent="HSplitContainer/HBoxContainer"]
+[node name="VScrollBar" type="VScrollBar" parent="VBoxContainer/HSplitContainer/HBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 step = 100.0
 page = 100.0
 custom_step = 50.0
 
-[node name="Debug" type="TextEdit" parent="HSplitContainer"]
+[node name="Debug" type="TextEdit" parent="VBoxContainer/HSplitContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 wrap_mode = 1
 script = ExtResource("3_qbf4f")
 
-[connection signal="clicked_line" from="HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="." method="edit_line"]
-[connection signal="clicked_line" from="HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="HSplitContainer/Debug" method="show_debug"]
-[connection signal="gui_input" from="HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="." method="_on_doc_canvas_gui_input"]
-[connection signal="height_changed" from="HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="." method="_on_doc_canvas_height_changed"]
-[connection signal="gui_input" from="HSplitContainer/HBoxContainer/CanvasContainer/TextEdit" to="." method="_on_text_edit_gui_input"]
-[connection signal="visibility_changed" from="HSplitContainer/HBoxContainer/CanvasContainer/TextEdit" to="." method="_on_text_edit_visibility_changed"]
-[connection signal="value_changed" from="HSplitContainer/HBoxContainer/VScrollBar" to="." method="_on_v_scroll_bar_value_changed"]
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Line Spacing: "
+
+[node name="LineSpacingSpinBox" type="SpinBox" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+suffix = "px"
+
+[connection signal="gui_input" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer" to="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" method="_gui_input"]
+[connection signal="clicked_line" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="." method="_on_document_canvas_clicked_line"]
+[connection signal="clicked_line" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="VBoxContainer/HSplitContainer/Debug" method="show_debug"]
+[connection signal="gui_input" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="." method="_on_doc_canvas_gui_input"]
+[connection signal="height_changed" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="." method="_on_doc_canvas_height_changed"]
+[connection signal="gui_input" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/TextEdit" to="." method="_on_text_edit_gui_input"]
+[connection signal="visibility_changed" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/TextEdit" to="." method="_on_text_edit_visibility_changed"]
+[connection signal="value_changed" from="VBoxContainer/HSplitContainer/HBoxContainer/VScrollBar" to="." method="_on_v_scroll_bar_value_changed"]
+[connection signal="value_changed" from="VBoxContainer/HBoxContainer/LineSpacingSpinBox" to="." method="_on_line_spacing_spin_box_value_changed"]

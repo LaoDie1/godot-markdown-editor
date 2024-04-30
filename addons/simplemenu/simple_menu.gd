@@ -76,7 +76,7 @@ func set_menu_shortcut(menu_path: StringName, data: Dictionary):
 func _execute_menu_by_path(menu_path: StringName, method_name: String, params: Array = []):
 	var menu = get_menu(menu_path)
 	var idx = get_menu_idx(menu_path)
-	if menu and idx > 0:
+	if menu and idx > -1:
 		return menu.callv(method_name, params)
 	return null
 
@@ -91,14 +91,16 @@ func set_item_disabled(menu_path: StringName, value: bool):
 func set_menu_as_checkable(menu_path: StringName, value: bool):
 	var menu = get_menu(menu_path)
 	var idx = get_menu_idx(menu_path)
-	if menu and idx > 0:
+	if menu and idx > -1:
 		menu.set_item_as_checkable(idx, value)
+	else:
+		push_warning("没有 %s 菜单" % menu_path)
 
 ## 菜单复选框是否是启用的
 func is_menu_as_checkable(menu_path: StringName) -> bool:
 	var menu = get_menu(menu_path)
 	var idx = get_menu_idx(menu_path)
-	if menu and idx > 0:
+	if menu and idx > -1:
 		return menu.is_item_checkable(idx)
 	return false
 
@@ -129,7 +131,7 @@ func set_menu_checked(menu_path: StringName, value: bool):
 func get_menu_checked(menu_path: StringName) -> bool:
 	var menu = get_menu(menu_path)
 	var idx = get_menu_idx(menu_path)
-	if menu and idx > 0:
+	if menu and idx > -1:
 		return menu.is_item_checked(idx)
 	return false
 

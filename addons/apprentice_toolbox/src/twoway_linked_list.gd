@@ -86,6 +86,7 @@ func insert_after(object, to):
 
 ## 合并节点，并返回中间合并的项
 func merge(from, to) -> Array:
+	# from | next 
 	var next = get_next(to)
 	var list : Array = []
 	var result = for_next(from, func(item):
@@ -98,8 +99,8 @@ func merge(from, to) -> Array:
 	for item in list:
 		left.erase(item)
 		right.erase(item)
-	left[from] = next
-	right[next] = next
+	set_previous(next, from)
+	set_next(from, next)
 	return list
 
 

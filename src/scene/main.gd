@@ -5,6 +5,7 @@
 # - datetime: 2024-04-22 17:19:07
 # - version: 4.3.0.dev5
 #============================================================
+## 整体软件界面
 extends Control
 
 
@@ -20,10 +21,10 @@ extends Control
 
 var current_file : String:
 	set(v):
-		if current_file != v:
+		if current_file != v or v == "":
 			current_file = v
 			if current_file != "":
-				markdown_edit.file_path = current_file
+				markdown_edit.file_path = current_file # 自动打开文件
 				document_text_edit.text = markdown_edit.get_text()
 			else:
 				markdown_edit.file_path = ""
@@ -36,7 +37,7 @@ var current_file : String:
 func _ready():
 	menu.init_menu({
 		"File": ["New", "Open", "Scan Files", "Save",],
-		"Operate": ["Print", "Show Debug"],
+		"Operate": ["Show Debug", "Print", ],
 	})
 	menu.init_shortcut({
 		"/File/New": SimpleMenu.parse_shortcut("Ctrl+N"),
@@ -61,6 +62,7 @@ func _ready():
 			for file in files:
 				add_file_item(file)
 	)
+	current_file = ""
 
 
 
@@ -94,6 +96,7 @@ func open_file(path: String):
 			if file_item_list.get_item_metadata(id) == path:
 				file_item_list.select(id)
 				break
+
 
 func save_file(file_path: String):
 	var text : String = markdown_edit.get_text()
