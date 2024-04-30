@@ -233,8 +233,8 @@ func _on_text_edit_gui_input(event: InputEvent) -> void:
 
 func _on_line_spacing_spin_box_value_changed(value):
 	if document_canvas.document:
-		var last = ConfigKey.Display.line_spacing.value(4)
 		ConfigKey.Display.line_spacing.update(value)
+		var last = ConfigKey.Display.line_spacing.value(4)
 		var first_line = document_canvas.document.get_first_line()
 		var line_linked_list = document_canvas.document.line_linked_list
 		var diff = value - last
