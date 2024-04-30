@@ -274,7 +274,7 @@ func draw_to(canvas: CanvasItem):
 			var pos : Vector2 = line_rect.position
 			pos.x += margin.left / 2 # 边距中间
 			pos.y += get_font_height() * 0.75 # 第一行中间
-			canvas.draw_circle( pos, 3, Color(0,0,0,0.33))
+			canvas.draw_circle( pos, 3, font_color)
 		
 		LineType.ImageUrl:
 			if _image:
