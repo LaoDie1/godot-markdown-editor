@@ -160,7 +160,7 @@ func init_lines(string_lines: Array) -> void:
 		line_item = create_line(line)
 		line_item.offset_y = offset_y
 		set_group_line(offset_y, line_item)
-		offset_y += line_item.get_line_height() + ConfigKey.Display.line_spacing.value(8)
+		offset_y += line_item.get_line_height() + ConfigKey.Display.line_spacing.value(4)
 	_document_height = offset_y
 	height_changed.emit()
 

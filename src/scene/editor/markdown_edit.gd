@@ -34,6 +34,7 @@ extends Control
 @onready var text_edit: TextEdit = %TextEdit
 @onready var v_scroll_bar: VScrollBar = %VScrollBar
 @onready var debug: TextEdit = %Debug
+@onready var line_spacing_spin_box: SpinBox = %LineSpacingSpinBox
 
 
 var _selected_line_item: LineItem
@@ -52,7 +53,8 @@ func _init():
 func _ready() -> void:
 	text_edit.visible = false
 	debug.visible = show_debug
-	ConfigKey.Display.line_spacing.update(8)
+	line_spacing_spin_box.value = ConfigKey.Display.line_spacing.value()
+	
 
 
 func _process(delta):
@@ -230,8 +232,18 @@ func _on_text_edit_gui_input(event: InputEvent) -> void:
 
 
 func _on_line_spacing_spin_box_value_changed(value):
-	ConfigKey.Display.line_spacing.update(value)
-
+	if document_canvas.document:
+		var last = ConfigKey.Display.line_spacing.value(4)
+		ConfigKey.Display.line_spacing.update(value)
+		var first_line = document_canvas.document.get_first_line()
+		var line_linked_list = document_canvas.document.line_linked_list
+		var diff = value - last
+		var idx = [1]
+		line_linked_list.for_next(first_line, func(line: LineItem):
+			line.offset_y += diff * idx[0]
+			idx[0] += 1
+		)
+		document_canvas.queue_redraw()
 
 
 func _on_document_canvas_clicked_line(line):

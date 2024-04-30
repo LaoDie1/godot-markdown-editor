@@ -50,7 +50,6 @@ func _enter_tree() -> void:
 		var font : Font = Engine.get_main_loop().current_scene.get_theme_default_font()
 		ConfigKey.Display.font.update( font )
 	# 保存数据
-	ConfigKey.Display.line_spacing.update(8)
 	ConfigKey.Display.font_path.update("")
 
 
