@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://cn2d275vihbnj"]
+[gd_scene load_steps=6 format=3 uid="uid://cn2d275vihbnj"]
 
 [ext_resource type="Script" path="res://src/scene/main.gd" id="1_5283d"]
 [ext_resource type="Script" path="res://addons/simplemenu/simple_menu.gd" id="1_s2vjw"]
 [ext_resource type="PackedScene" uid="uid://cnagm0ae3yv72" path="res://src/scene/editor/markdown_edit.tscn" id="3_dylv3"]
+[ext_resource type="Script" path="res://src/scene/file_tree.gd" id="3_k2uik"]
 [ext_resource type="PackedScene" uid="uid://cvq1itqxgbryv" path="res://src/scene/prompt/prompt.tscn" id="4_ef3uh"]
 
 [node name="Main" type="Control"]
@@ -87,6 +88,13 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 fixed_icon_size = Vector2i(24, 24)
 
+[node name="FileTree" type="Tree" parent="MarginContainer/VBoxContainer/HSplitContainer/Left"]
+unique_name_in_owner = true
+layout_mode = 2
+hide_folding = true
+hide_root = true
+script = ExtResource("3_k2uik")
+
 [node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/HSplitContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -143,4 +151,4 @@ layout_mode = 2
 [connection signal="dir_selected" from="ScanFilesDialog" to="." method="_on_scan_files_dialog_dir_selected"]
 [connection signal="menu_check_toggled" from="MarginContainer/VBoxContainer/Menu" to="." method="_on_menu_menu_check_toggled"]
 [connection signal="menu_pressed" from="MarginContainer/VBoxContainer/Menu" to="." method="_on_menu_menu_pressed"]
-[connection signal="item_selected" from="MarginContainer/VBoxContainer/HSplitContainer/Left/FileItemList" to="." method="_on_file_item_list_item_selected"]
+[connection signal="item_selected" from="MarginContainer/VBoxContainer/HSplitContainer/Left/FileTree" to="." method="_on_file_item_tree_item_selected"]

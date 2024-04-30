@@ -37,13 +37,10 @@ var origin_text : String: ## 原始字符串
 var type : int = LineType.Normal ## 行类型
 var offset_y : int ## 画布所在的 y 轴点
 var alignment : int = HORIZONTAL_ALIGNMENT_LEFT ## 文本对齐方式
-var font : Font ## 字体
-var font_size : int = 16 ## 字体大小
-var font_color : Color = Color(1,1,1,1) ## 字体颜色
-var margin : Margin = Margin.new() ## 边距
-
 var document : Document
-var blocks : Array[BlockType] = [] ## 文字数据块 # TODO 后续绘制时如果为空，则懒加载数据块
+var margin : Margin = Margin.new() ## 边距
+var blocks : Array = [] ## 文字数据块 # TODO 后续绘制时如果为空，则懒加载数据块
+
 var view_status : bool = false: ## 在视线中的状态
 	set(v):
 		if view_status != v:
@@ -54,6 +51,9 @@ var view_status : bool = false: ## 在视线中的状态
 var update_status : bool = false ## 是否更新过内容
 var text_block_update_status : bool = false ## 文本块更新状态
 
+var font : Font ## 字体
+var font_size : int = 16 ## 字体大小
+var font_color : Color = Color(1,1,1,1) ## 字体颜色
 
 var _text : String # 显示出来的字符串
 var _image : Texture2D: # 当前标签图片
@@ -75,13 +75,16 @@ var _line_height : int: # 高度缓存
 func _init(params: Dictionary):
 	_incr_id += 1
 	self.id = _incr_id
-	font = ConfigKey.Display.font.value()
-	#font = Engine.get_main_loop().current_scene.get_theme_default_font()
-	font_size = ConfigKey.Display.font_size.value()
-	font_color = ConfigKey.Display.text_color.value()
+	
+	#self.font = Engine.get_main_loop().current_scene.get_theme_default_font()
+	self.font = ConfigKey.Display.font.value()
+	self.font_size = ConfigKey.Display.font_size.value()
+	self.font_color = ConfigKey.Display.text_color.value()
+	
 	for p in params:
 		self[p] = params[p]
 	self._line_height = get_text_height()
+
 
 
 #============================================================
@@ -96,6 +99,8 @@ func get_line_height() -> int:
 
 ## 获取当前字符串总高度（包括换行高度）
 func get_text_height() -> int:
+	if _text == "":
+		return 8
 	#assert(type != LineType.Error, "还没有设置行的类型")
 	if type == LineType.ImageUrl:
 		return _line_height + margin.top + margin.bottom
@@ -146,19 +151,27 @@ func get_content_rect() -> Rect2:
 #============================================================
 #  操作
 #============================================================
-## 处理 markdown 字符串行
+## 处理 markdown 字符串行（视线内时调用）
 func handle_markdown() -> void:
 	# 初始化属性
-	_text = origin_text
 	type = LineType.Normal
 	margin = Margin.new()
 	margin.left = 8
 	if not Engine.is_editor_hint():
 		font_size = ConfigKey.Display.font_size.value()
 	
+	if origin_text == "":
+		return
+	
 	var info = LineType.get_markdown_line_info(origin_text)
 	self.type = info["type"]
-	self._text = info["text"]
+	if not text_block_update_status:
+		self._text = info["text"]
+		text_block_update_status = true
+		if type != LineType.Code:
+			# TODO 文本段落
+			_handle_text_block(_text)
+	
 	match type:
 		LineType.Tile_Larger:
 			font_size = font_size * 2
@@ -204,12 +217,29 @@ func handle_markdown() -> void:
 		_:
 			printerr("其他类型：", type, "  ", info.get("tag"))
 	
-	#if type != LineType.Code and not text_block_update_status:
-		## TODO 文本段落
-		#BlockType.handle_block(origin_text)
-	
 	# 行高
 	_line_height = get_text_height()
+
+
+func _handle_text_block(text: String):
+	var new_text : String = ""
+	blocks = BlockType.handle_block(text)
+	for item in blocks:
+		match item["type"]:
+			BlockType.Type.TEXT:
+				new_text += item["text"]
+				
+			BlockType.Type.IMAGE:
+				_handle_image_url(item["url"], func(image: Image):
+					var texture = ImageTexture.create_from_image(image)
+				)
+				
+			BlockType.Type.LINK:
+				if item.get("name", "") != "":
+					new_text += item["name"]
+				else:
+					new_text += item["url"]
+	_text = new_text
 
 
 # 处理图片 URL。这个 [code]callback[/code] 回调方法需要有一个 [Image] 类型的参数接收返回的图片 
@@ -282,8 +312,6 @@ func draw_to(canvas: CanvasItem):
 				var content_rect = get_content_rect()
 				canvas.draw_texture(_image, content_rect.position)
 				return
-	
-	# TODO 懒加载 文本块Block
 	
 	if _text:
 		var content_rect = get_content_rect()

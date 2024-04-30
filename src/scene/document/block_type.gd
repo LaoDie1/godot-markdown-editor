@@ -29,6 +29,7 @@ class BlockRegex:
 			"(?<IMAGE>!\\[(.*?)\\]\\((.*?)\\))"   # 图片
 			+ "|(?<LINK>\\[(.*?)\\]\\((.*?)\\))" # 链接
 			+ "|(?<LINK>\\<(.*?)\\>)"
+			#+ "|(?<BOLD>(\\*{1,})(.*?)(\\*{1,}))"
 		)
 
 static var block_regex : BlockRegex = BlockRegex.new()

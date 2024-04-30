@@ -20,7 +20,7 @@ BLOCK: {block}
 
 func show_debug(line: LineItem):
 	var data = JsonUtil.object_to_dict(line)
-	var items = line.blocks.map(func(block): return block.format_code(0))
-	data["block"] = "\n".join(items)
+	var items = line.blocks.map(func(block: Dictionary): return block["text"])
+	data["block"] = "\n - ".join(items)
 	self.text = DEBUG_CONTENT.format(data)
 

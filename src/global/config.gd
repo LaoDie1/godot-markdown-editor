@@ -23,13 +23,13 @@ func _init():
 		"accent_color": Color(0.7578, 0.5261, 0.2944, 1),
 		"text_color": Color(1,1,1,0.8),
 		"font_color": Color(1,1,1,0.9),
-		"line_spacing": 8,
+		"line_spacing": 4,
 		"current_dir": "",
 		"opened_files": {},
 	}
 	var data_file_path : String = OS.get_config_dir().path_join("Godot/MarkdownEditor/.config.data")
 	data_file = DataFile.instance(data_file_path, DataFile.BYTES, default_value)
-	
+	data_file.set_value("line_spacing", 4)
 	# 设置配置属性
 	ScriptUtil.init_class_static_value(ConfigKey, 
 		func(script:GDScript, path, property: String):

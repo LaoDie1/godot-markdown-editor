@@ -76,14 +76,26 @@ func get_text() -> String:
 ## 滚动到目标位置
 func scroll_to(y: int):
 	v_scroll_bar.value = y
-	if text_edit.visible:
-		text_edit.visible = false
-		alter_line_from_text_edit(false)
+	alter_line_from_text_edit(false)
 	document_canvas.vertical_offset = y
 	document_canvas.position.y = -y
+	if text_edit.visible:
+		var rect : Rect2 = document_canvas.get_line_rect(_selected_line_item)
+		text_edit.position = rect.position - Vector2(0, document_canvas.vertical_offset)
+		text_edit.size = rect.size
+
+## 滚动到行
+func scroll_to_line(line: LineItem):
+	var min_y = document_canvas.vertical_offset
+	var max_y = document_canvas.vertical_offset + size.y
+	if min_y > line.offset_y:
+		scroll_to(line.offset_y - 10)
+	elif max_y < line.offset_y + 100:
+		scroll_to(min_y + 100)
 
 ## 编辑行
 func edit_line(line: LineItem):
+	alter_line_from_text_edit(false)
 	_selected_line_item = line
 	if v_scroll_bar.value > line.offset_y:
 		scroll_to(line.offset_y)
@@ -94,11 +106,11 @@ func edit_line(line: LineItem):
 	var rect : Rect2 = document_canvas.get_line_rect(_selected_line_item)
 	text_edit.position = rect.position - Vector2(0, document_canvas.vertical_offset)
 	text_edit.size = rect.size
-	text_edit.force_update_transform()
 	text_edit.visible = true
 	
 	text_edit.grab_focus()
 	text_edit.clear_undo_history()
+	document_canvas.last_clicked_item = line
 
 
 ## 修改行数据
@@ -167,37 +179,54 @@ func _on_v_scroll_bar_value_changed(value: float) -> void:
 
 
 func _on_text_edit_gui_input(event: InputEvent) -> void:
-	if event is InputEventKey:
-		if InputUtil.is_key(event, KEY_ENTER):
-			if not Input.is_key_pressed(KEY_CTRL) and _selected_line_item:
-				if text_edit.text.strip_edges(true, false).begins_with("```"):
-					if text_edit.get_caret_line() == 0:
-						return
-					elif text_edit.get_caret_line() > 0:
-						var line = text_edit.get_line(text_edit.get_line_count()-1)
-						var column = text_edit.get_caret_column()
-						if not (line.begins_with("```") and column == line.length()):
+	if event is InputEventKey and event.pressed:
+		match event.keycode:
+			KEY_ENTER:
+				if not Input.is_key_pressed(KEY_CTRL) and _selected_line_item:
+					if text_edit.text.strip_edges(true, false).begins_with("```"):
+						if text_edit.get_caret_line() == 0:
 							return
-				
-				Engine.get_main_loop().root.set_input_as_handled()
-				# 插入新的行
-				if _selected_line_item.type == LineType.UnorderedList:
-					insert_line(_selected_line_item, "- ")
-				else:
-					insert_line(_selected_line_item, "")
-				
-		elif InputUtil.is_key(event, KEY_ESCAPE):
-			text_edit.hide()
+						elif text_edit.get_caret_line() > 0:
+							var line = text_edit.get_line(text_edit.get_line_count()-1)
+							var column = text_edit.get_caret_column()
+							if not (line.begins_with("```") and column == line.length()):
+								return
+					
+					Engine.get_main_loop().root.set_input_as_handled()
+					# 插入新的行
+					if _selected_line_item.type == LineType.UnorderedList:
+						insert_line(_selected_line_item, "- ")
+					else:
+						insert_line(_selected_line_item, "")
 			
-		elif InputUtil.is_key(event, KEY_BACKSPACE):
-			if (text_edit.get_selected_text() == "" 
-				and text_edit.get_caret_column() == 0 
-				and text_edit.get_caret_line() == 0
-			):
-				Engine.get_main_loop().root.set_input_as_handled()
+			KEY_ESCAPE:
+				text_edit.hide()
+			
+			KEY_BACKSPACE:
+				if (text_edit.get_selected_text() == "" 
+					and text_edit.get_caret_column() == 0 
+					and text_edit.get_caret_line() == 0
+				):
+					Engine.get_main_loop().root.set_input_as_handled()
+					if _selected_line_item:
+						remove_line(_selected_line_item)
+			
+			KEY_DOWN:
 				if _selected_line_item:
-					remove_line(_selected_line_item)
-				
+					var next : LineItem = document_canvas.document.line_linked_list.get_next(_selected_line_item)
+					if next:
+						scroll_to_line(next)
+						edit_line(next)
+			
+			KEY_UP:
+				if _selected_line_item:
+					var previous : LineItem = document_canvas.document.line_linked_list.get_previous(_selected_line_item)
+					if previous:
+						scroll_to_line(previous)
+						edit_line(previous)
+	else:
+		document_canvas.gui_input.emit(event)
+		
 
 
 func _on_line_spacing_spin_box_value_changed(value):
@@ -210,5 +239,4 @@ func _on_document_canvas_clicked_line(line):
 	await Engine.get_main_loop().create_timer(0.05).timeout
 	var v = text_edit.get_line_column_at_pos( text_edit.get_local_mouse_position() )
 	text_edit.set_caret_column(v.x)
-	print(v)
 

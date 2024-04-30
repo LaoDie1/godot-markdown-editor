@@ -1,34 +1,8 @@
-[gd_scene load_steps=8 format=3 uid="uid://cnagm0ae3yv72"]
+[gd_scene load_steps=6 format=3 uid="uid://cnagm0ae3yv72"]
 
 [ext_resource type="Script" path="res://src/scene/editor/markdown_edit.gd" id="1_747k5"]
 [ext_resource type="Script" path="res://src/scene/document/document_canvas.gd" id="2_7vpx2"]
 [ext_resource type="Script" path="res://src/scene/editor/debug_edit.gd" id="3_qbf4f"]
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tqggp"]
-
-[sub_resource type="Theme" id="Theme_wx15x"]
-HScrollBar/icons/decrement = null
-HScrollBar/icons/decrement_highlight = null
-HScrollBar/icons/decrement_pressed = null
-HScrollBar/icons/increment = null
-HScrollBar/icons/increment_highlight = null
-HScrollBar/icons/increment_pressed = null
-HScrollBar/styles/grabber = SubResource("StyleBoxEmpty_tqggp")
-HScrollBar/styles/grabber_highlight = SubResource("StyleBoxEmpty_tqggp")
-HScrollBar/styles/grabber_pressed = SubResource("StyleBoxEmpty_tqggp")
-HScrollBar/styles/scroll = SubResource("StyleBoxEmpty_tqggp")
-HScrollBar/styles/scroll_focus = SubResource("StyleBoxEmpty_tqggp")
-VScrollBar/icons/decrement = null
-VScrollBar/icons/decrement_highlight = null
-VScrollBar/icons/decrement_pressed = null
-VScrollBar/icons/increment = null
-VScrollBar/icons/increment_highlight = null
-VScrollBar/icons/increment_pressed = null
-VScrollBar/styles/grabber = SubResource("StyleBoxEmpty_tqggp")
-VScrollBar/styles/grabber_highlight = SubResource("StyleBoxEmpty_tqggp")
-VScrollBar/styles/grabber_pressed = SubResource("StyleBoxEmpty_tqggp")
-VScrollBar/styles/scroll = SubResource("StyleBoxEmpty_tqggp")
-VScrollBar/styles/scroll_focus = SubResource("StyleBoxEmpty_tqggp")
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_a7m7v"]
 content_margin_left = 8.0
@@ -107,7 +81,6 @@ offset_bottom = 60.0
 size_flags_horizontal = 0
 size_flags_vertical = 0
 mouse_filter = 1
-theme = SubResource("Theme_wx15x")
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_selected_color = Color(1, 0.998169, 0.882813, 1)
 theme_override_colors/caret_color = Color(0, 0, 0, 0.65098)
@@ -126,7 +99,6 @@ unique_name_in_owner = true
 layout_mode = 2
 step = 100.0
 page = 100.0
-custom_step = 50.0
 
 [node name="Debug" type="TextEdit" parent="VBoxContainer/HSplitContainer"]
 unique_name_in_owner = true

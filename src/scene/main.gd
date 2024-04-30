@@ -13,10 +13,10 @@ extends Control
 @onready var markdown_edit: MarkdownEdit = %MarkdownEdit
 @onready var document_text_edit: TextEdit = %DocumentTextEdit
 
-@onready var file_item_list : ItemList = %FileItemList
 @onready var open_file_dialog = %OpenFileDialog
 @onready var save_file_dialog: FileDialog = %SaveFileDialog
 @onready var scan_files_dialog: FileDialog = %ScanFilesDialog
+@onready var file_tree : SimpleFileTree = %FileTree
 
 
 var current_file : String:
@@ -65,17 +65,18 @@ func _ready():
 	current_file = ""
 
 
+func _exit_tree():
+	ConfigKey.Path.opened_files.update(
+		DataUtil.array_to_dictionary(file_tree.get_files())
+	)
+
 
 #============================================================
 #  自定义
 #============================================================
 func add_file_item(file_path: String, force: bool = false):
 	if FileAccess.file_exists(file_path) and (Config.add_open_file(file_path) or force):
-		var idx : int = file_item_list.item_count
-		file_item_list.add_item(file_path.get_file())
-		file_item_list.set_item_icon(idx, Icons.get_icon("File"))
-		file_item_list.set_item_metadata(idx, file_path)
-		file_item_list.set_item_tooltip(idx, file_path)
+		file_tree.add_file(file_path)
 		return true
 	return false
 
@@ -88,14 +89,8 @@ func add_file_items(files: Array, force: bool = false):
 func open_file(path: String):
 	current_file = path
 	ConfigKey.Path.current_dir.update(path.get_base_dir())
-	
 	if add_file_item(path):
-		file_item_list.select( file_item_list.item_count - 1 )
-	else:
-		for id in file_item_list.item_count:
-			if file_item_list.get_item_metadata(id) == path:
-				file_item_list.select(id)
-				break
+		file_tree.select_file(path)
 
 
 func save_file(file_path: String):
@@ -116,7 +111,7 @@ func _on_menu_menu_pressed(idx, menu_path):
 	match menu_path:
 		"/File/New":
 			current_file = ""
-			file_item_list.deselect_all()
+			file_tree.deselect_all()
 		
 		"/File/Open":
 			open_file_dialog.popup_centered_ratio(0.5)
@@ -141,11 +136,6 @@ func _on_menu_menu_check_toggled(idx, menu_path, status):
 			markdown_edit.show_debug = status
 
 
-func _on_file_item_list_item_selected(index: int):
-	var file_path = file_item_list.get_item_metadata(index)
-	open_file(file_path)
-
-
 func _on_scan_files_dialog_dir_selected(dir: String) -> void:
 	var files = FileUtil.scan_file(dir, true).filter(
 		func(file: String): return file.get_extension().to_lower() in [
@@ -164,3 +154,10 @@ func _on_open_file_dialog_file_selected(path: String):
 func _on_save_file_dialog_file_selected(path: String):
 	save_file(path)
 	ConfigKey.Dialog.save_dir.update(path.get_base_dir())
+
+func _on_file_item_tree_item_selected():
+	var item : TreeItem = file_tree.get_selected()
+	var file_path = item.get_metadata(0)
+	open_file(file_path)
+	
+	
