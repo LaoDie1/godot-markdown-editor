@@ -82,9 +82,8 @@ func get_value(default = null):
 		return default
 	return _value
 
-
 ## 获取最后一次修改的值
-func get_last(default = null):
+func get_last_value(default = null):
 	if typeof(_last) == TYPE_NIL:
 		return default
 	return _last

@@ -47,7 +47,7 @@ func _init():
 	ConfigKey.Display.line_spacing.bind_method(func(value):
 		var first_line = document_canvas.document.get_first_line()
 		var line_linked_list = document_canvas.document.line_linked_list
-		var last_line_spacing = ConfigKey.Display.line_spacing.get_last(4)
+		var last_line_spacing = ConfigKey.Display.line_spacing.get_last_value(4)
 		var diff = value - last_line_spacing
 		var idx = [0]
 		line_linked_list.for_next(first_line, func(line: LineItem):

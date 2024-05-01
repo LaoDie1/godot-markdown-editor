@@ -63,7 +63,7 @@ func get_first_line() -> LineItem:
 
 ## 获取最后一行
 func get_last_line() -> LineItem:
-	return line_linked_list.get_last()
+	return line_linked_list.get_last_value()
 
 ## 获取文档字符
 func get_text() -> String:
@@ -121,7 +121,7 @@ func get_line_by_point(point: Vector2) -> LineItem:
 			if last_line[0]:
 				return last_line[0]
 			return start_line
-	return line_linked_list.get_last()
+	return line_linked_list.get_last_value()
 
 ## 获取行
 func get_line(idx: int) -> LineItem:
