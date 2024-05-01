@@ -1,8 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://bvsxkneykvl44"]
-
-[ext_resource type="Script" path="res://addons/apprentice/util/generate_code/test.gd" id="1_30n0c"]
-
-[node name="test" type="Control"]
-layout_mode = 3
-anchors_preset = 0
-script = ExtResource("1_30n0c")
