@@ -19,6 +19,7 @@ const META_KEY = &"_PropertyBindItem_value"
 var _name: String
 var _method_list : Array = []
 var _value
+var _last
 
 
 #============================================================
@@ -71,13 +72,20 @@ func update(value) -> void:
 		# 设置属性
 		for method:Callable in _method_list:
 			method.call(value)
-		var previous = _value
+		_last = _value
 		_value = value
-		value_changed.emit(previous, value)
+		value_changed.emit(_last, value)
 
 ## 获取属性值
 func value(default = null):
 	if typeof(_value) == TYPE_NIL:
 		return default
 	return _value
+
+
+## 获取最后一次修改的值
+func get_last(default = null):
+	if typeof(_last) == TYPE_NIL:
+		return default
+	return _last
 

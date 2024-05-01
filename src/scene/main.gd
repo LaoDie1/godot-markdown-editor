@@ -19,6 +19,7 @@ extends Control
 @onready var file_tree : SimpleFileTree = %FileTree
 
 
+## 当前打开的文件（设置属性，会自动打开文件）
 var current_file : String:
 	set(v):
 		if current_file != v or v == "":
@@ -62,7 +63,6 @@ func _ready():
 			for file in files:
 				add_file_item(file)
 	)
-	current_file = ""
 
 
 func _exit_tree():

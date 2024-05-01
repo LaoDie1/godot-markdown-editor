@@ -293,7 +293,9 @@ func draw_to(canvas: CanvasItem):
 		LineType.SeparationLine:
 			# 线条居中
 			var y : int = line_rect.position.y + line_rect.size.y / 2
-			canvas.draw_line( Vector2(0, y), Vector2(document.width, y), Color(0,0,0,0.15), 1)
+			var color = ConfigKey.Display.text_color.value()
+			color.a = 0.2
+			canvas.draw_line( Vector2(0, y), Vector2(document.width, y), color, 1)
 			return
 			
 		LineType.Code:
