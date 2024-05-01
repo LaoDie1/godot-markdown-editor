@@ -151,7 +151,7 @@ func get_content_rect() -> Rect2:
 #============================================================
 #  操作
 #============================================================
-## 处理 markdown 字符串行（视线内时调用）
+## 处理 markdown 字符串行（更新 view_status 状态时自动调用）
 func handle_markdown() -> void:
 	# 初始化属性
 	type = LineType.Normal
@@ -272,6 +272,10 @@ func _handle_image_url(url: String, callback: Callable):
 		callback.call( Image.load_from_file(path) )
 
 
+
+#============================================================
+#  绘制
+#============================================================
 ## 绘制到这个节点上。（这时开始计算实际高度）
 ##[br]
 ##[br]- [code]canvas[/code]  绘制到的目标画布
@@ -288,7 +292,7 @@ func draw_to(canvas: CanvasItem):
 			# 左线条
 			var left_strip : Rect2 = line_rect
 			left_strip.size.x = 8 # 线条宽度 8
-			canvas.draw_rect(left_strip, Color.CHARTREUSE, true)
+			canvas.draw_rect(left_strip, Color(0.498, 1, 0, 0.7843), true)
 		
 		LineType.SeparationLine:
 			# 线条居中
@@ -300,8 +304,8 @@ func draw_to(canvas: CanvasItem):
 			
 		LineType.Code:
 			# 代码边框
-			canvas.draw_rect( line_rect, Color(0,0,0,0.2), false, 1)
-			canvas.draw_rect( line_rect, Color(0,0,0,0.1) )
+			canvas.draw_rect( line_rect, Color(0,0,0,0.5), false, 1)
+			canvas.draw_rect( line_rect, Color(0,0,0,0.2) )
 		
 		LineType.UnorderedList:
 			var pos : Vector2 = line_rect.position
