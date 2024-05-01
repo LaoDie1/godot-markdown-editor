@@ -89,7 +89,7 @@ func merge(from, to) -> Array:
 	# from | next 
 	var next = get_next(to)
 	var list : Array = []
-	var result = for_next(from, func(item):
+	var result = find_next(from, func(item):
 		list.append(item)
 		return item == to
 	)
@@ -146,7 +146,6 @@ func for_next(object, method: Callable, include_self : bool = false):
 	while typeof(curr) != TYPE_NIL:
 		method.call(curr)
 		curr = get_next(curr)
-	return last
 
 
 ## 向前遍历。若想带有结束条件，请使用 [method find_previous] 方法
@@ -158,7 +157,6 @@ func for_previous(object, method: Callable, include_self : bool = false):
 	while typeof(curr) != TYPE_NIL:
 		method.call(curr)
 		curr = get_previous(curr)
-	return last
 
 
 ## 向后搜索
@@ -173,7 +171,7 @@ func find_next(object, method: Callable, include_self : bool = false):
 		if result is bool and result:
 			return curr
 		curr = get_next(curr)
-	return last
+	return curr
 
 
 ## 向前搜索
@@ -187,6 +185,6 @@ func find_previous(object, method: Callable, include_self : bool = false):
 		if result is bool and result:
 			return curr
 		curr = get_previous(curr)
-	return last
+	return curr
 
 

@@ -30,8 +30,7 @@ var _document_height : int: # 文档高度
 		_document_height = v
 		height_changed.emit()
 var _last_offset_y : int = 0
-var _page_first_line : Dictionary = {} # 分页，每页第一个行
-
+var _page_group_line : Dictionary = {} # 分页，每页第一个行
 
 
 #============================================================
@@ -78,22 +77,24 @@ func get_document_height():
 	return _document_height
 
 ## 设置这个位置的组的行
-func set_group_line(y: float, line: LineItem):
-	var i : int = ceili(y / PAGE_HEIGHT)
-	if not _page_first_line.has(i):
-		_page_first_line[i] = line
+func set_group_line(line: LineItem):
+	var y : int = int(line.offset_y)
+	var i : int = y / PAGE_HEIGHT
+	if not _page_group_line.has(i):
+		_page_group_line[i] = line
 
-func remove_group_line(y: float, line: LineItem):
-	var i : int = ceili(y / PAGE_HEIGHT)
-	if _page_first_line.has(i) and _page_first_line[i] == line:
-		_page_first_line.erase(i)
+func remove_group_line(line: LineItem):
+	var y : int = int(line.offset_y)
+	var i : int = y / PAGE_HEIGHT
+	if _page_group_line.has(i) and _page_group_line[i] == line:
+		_page_group_line.erase(i)
 
 ## 获取这个 Y 轴位置的行
 func get_group_line(y: int) -> LineItem:
 	var i : int = y / PAGE_HEIGHT
-	while not _page_first_line.has(i) and i > -1:
+	while not _page_group_line.has(i) and i > -1:
 		i -= 1
-	return _page_first_line.get(i)
+	return _page_group_line.get(i)
 
 ## 获取位置上的行
 func get_line_by_point(point: Vector2) -> LineItem:
@@ -159,7 +160,7 @@ func init_lines(string_lines: Array) -> void:
 	for line in string_lines:
 		line_item = create_line(line)
 		line_item.offset_y = offset_y
-		set_group_line(offset_y, line_item)
+		set_group_line(line_item)
 		offset_y += line_item.get_line_height() + ConfigKey.Display.line_spacing.get_value(4)
 	_document_height = offset_y
 	height_changed.emit()
@@ -200,19 +201,38 @@ func merge_line(from_line: LineItem, to_line: LineItem):
 	# 合并返回中间的行
 	var list = line_linked_list.merge(from_line, to_line)
 	if not list.is_empty():
+		var offset_height = 0
+		for item:LineItem in list:
+			offset_height += item.get_line_height()
+			remove_group_line(item)
+		update_line_offset(from_line, -offset_height)
+		update_line_offset(from_line, -ConfigKey.Display.line_spacing.get_value() * list.size())
+		
+		var from_height = from_line.get_line_height()
 		from_line.origin_text += "\n"
 		from_line.origin_text += "\n".join(list.map(func(item): return item.origin_text ))
+		from_line.handle_markdown()
+		
 	else:
 		Prompt.show_error("不是 from 行的后面的行")
 
+var _updated_line_offset : bool = false
 ## 更新行的偏移
 func update_line_offset(from_line: LineItem, offset: int):
+	if offset == 0:
+		return
 	_document_height += offset
 	line_linked_list.for_next(from_line, func(item: LineItem):
-		remove_group_line(item.offset_y, item)
 		item.offset_y += offset
-		set_group_line(item.offset_y, item)
 	)
+	# 更新分页点击位置
+	if not _updated_line_offset:
+		_updated_line_offset = true
+		await Engine.get_main_loop().process_frame
+		_page_group_line.clear()
+		for item in line_linked_list.get_list():
+			set_group_line(item)
+		_updated_line_offset = false
 
 ## 获取行数
 func get_line_count() -> int:
@@ -232,32 +252,34 @@ func draw(canvas: CanvasItem, canvas_offset_y: int, max_height: int):
 	var current_line = get_line_by_point(Vector2(0, canvas_offset_y))
 	if not current_line:
 		return
+	
 	var previous : LineItem = line_linked_list.get_previous(current_line)
 	if previous != null:
 		current_line = previous
 	# 开始绘制
 	var max_offset : int = canvas_offset_y + max_height
 	line_linked_list.for_next(current_line, func(line: LineItem):
-		line.view_status = true
 		if line.type == LineType.Code:
-			# 如果是单行的代码块
+			# 查找合并代码块（如果是单独的一行，则代表没有合并过代码块）
 			if not line.origin_text.contains("\n"):
 				__find_merge_code_line(line)
+		line.view_status = true
 		line.draw_to(canvas)
 		if line.offset_y >= max_offset:
 			return true
 	, true)
 
-func __find_merge_code_line(from_line: LineItem):
+func __find_merge_code_line(from_line: LineItem) -> bool:
 	var next_line : LineItem = line_linked_list.get_next(from_line)
 	if next_line != null and next_line.origin_text.strip_edges() != "":
 		var space_line = [0]
 		var code_line : LineItem = line_linked_list.find_next(from_line, func(line: LineItem):
-			line.view_status = true
-			if line.type == LineType.Code:
+			if line.origin_text.strip_edges(false, true) == "```":
 				return true
 		)
 		merge_line(from_line, code_line)
+		return true
+	return false
 
 
 

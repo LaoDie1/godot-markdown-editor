@@ -50,6 +50,7 @@ func _ready():
 		"/File/Open": Icons.get_icon("Load"),
 		"/File/Save": Icons.get_icon("Save"),
 		"/File/Scan Files": Icons.get_icon("FolderBrowse"),
+		"/File/Show File in File Manager": Icons.get_icon("FileTree"),
 	})
 	menu.set_menu_as_checkable("/Operate/Show Debug", true)
 	
@@ -96,11 +97,11 @@ func open_file(path: String):
 func save_file(file_path: String):
 	var text : String = markdown_edit.get_text()
 	if FileUtil.write_as_string(file_path, text):
-		print("已保存文件：", file_path)
 		current_file = file_path
+		Prompt.show_message("已保存文件：", [file_path])
 		add_file_item(file_path)
 	else:
-		printerr("保存失败：", FileAccess.get_open_error())
+		Prompt.show_error("保存失败：", [FileAccess.get_open_error()])
 
 
 
@@ -129,6 +130,8 @@ func _on_menu_menu_pressed(idx, menu_path):
 			var file = file_tree.get_selected_file()
 			if file:
 				FileUtil.shell_open(file)
+			else:
+				Prompt.show_error("没有选中文件")
 		
 		"/Operate/Print":
 			var text = markdown_edit.get_text()
@@ -143,9 +146,7 @@ func _on_menu_menu_check_toggled(idx, menu_path, status):
 
 func _on_scan_files_dialog_dir_selected(dir: String) -> void:
 	var files = FileUtil.scan_file(dir, true).filter(
-		func(file: String): return file.get_extension().to_lower() in [
-			"", "txt", "md"
-		]
+		func(file: String): return file.get_extension().to_lower() in ["", "txt", "md"]
 	)
 	add_file_items(files)
 	ConfigKey.Dialog.scan_dir.update(dir)
