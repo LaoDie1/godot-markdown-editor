@@ -53,11 +53,11 @@ func _ready():
 	})
 	menu.set_menu_as_checkable("/Operate/Show Debug", true)
 	
-	open_file_dialog.current_dir = ConfigKey.Dialog.open_dir.value("")
-	save_file_dialog.current_dir = ConfigKey.Dialog.save_dir.value("")
-	scan_files_dialog.current_dir = ConfigKey.Dialog.scan_dir.value("")
+	open_file_dialog.current_dir = ConfigKey.Dialog.open_dir.get_value("")
+	save_file_dialog.current_dir = ConfigKey.Dialog.save_dir.get_value("")
+	scan_files_dialog.current_dir = ConfigKey.Dialog.scan_dir.get_value("")
 	
-	add_file_items( ConfigKey.Path.opened_files.value().keys(), true )
+	add_file_items( ConfigKey.Path.opened_files.get_value().keys(), true )
 	Engine.get_main_loop().root.files_dropped.connect(
 		func(files):
 			for file in files:

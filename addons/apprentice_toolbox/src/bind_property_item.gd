@@ -77,7 +77,7 @@ func update(value) -> void:
 		value_changed.emit(_last, value)
 
 ## 获取属性值
-func value(default = null):
+func get_value(default = null):
 	if typeof(_value) == TYPE_NIL:
 		return default
 	return _value

@@ -58,7 +58,7 @@ func _exit_tree():
 
 
 func add_open_file(path) -> bool:
-	var dict = ConfigKey.Path.opened_files.value()
+	var dict = ConfigKey.Path.opened_files.get_value()
 	if not dict.has(path):
 		dict[path] = null
 		return true

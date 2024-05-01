@@ -45,15 +45,14 @@ var _selected_line_item: LineItem
 #============================================================
 func _init():
 	ConfigKey.Display.line_spacing.bind_method(func(value):
-		# TODO 更新显示
-		var last = ConfigKey.Display.line_spacing.get_last(4)
 		var first_line = document_canvas.document.get_first_line()
 		var line_linked_list = document_canvas.document.line_linked_list
-		var diff = value - last
-		var idx = [1]
+		var last_line_spacing = ConfigKey.Display.line_spacing.get_last(4)
+		var diff = value - last_line_spacing
+		var idx = [0]
 		line_linked_list.for_next(first_line, func(line: LineItem):
-			line.offset_y += diff * idx[0]
 			idx[0] += 1
+			line.offset_y += diff * idx[0]
 		)
 		document_canvas.queue_redraw()
 	)
@@ -62,7 +61,7 @@ func _init():
 func _ready() -> void:
 	text_edit.visible = false
 	debug.visible = show_debug
-	line_spacing_spin_box.value = ConfigKey.Display.line_spacing.value()
+	line_spacing_spin_box.value = ConfigKey.Display.line_spacing.get_value()
 	
 
 

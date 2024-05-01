@@ -77,9 +77,9 @@ func _init(params: Dictionary):
 	self.id = _incr_id
 	
 	#self.font = Engine.get_main_loop().current_scene.get_theme_default_font()
-	self.font = ConfigKey.Display.font.value()
-	self.font_size = ConfigKey.Display.font_size.value()
-	self.font_color = ConfigKey.Display.text_color.value()
+	self.font = ConfigKey.Display.font.get_value()
+	self.font_size = ConfigKey.Display.font_size.get_value()
+	self.font_color = ConfigKey.Display.text_color.get_value()
 	
 	for p in params:
 		self[p] = params[p]
@@ -158,7 +158,7 @@ func handle_markdown() -> void:
 	margin = Margin.new()
 	margin.left = 8
 	if not Engine.is_editor_hint():
-		font_size = ConfigKey.Display.font_size.value()
+		font_size = ConfigKey.Display.font_size.get_value()
 	
 	if origin_text == "":
 		return
@@ -293,7 +293,7 @@ func draw_to(canvas: CanvasItem):
 		LineType.SeparationLine:
 			# 线条居中
 			var y : int = line_rect.position.y + line_rect.size.y / 2
-			var color = ConfigKey.Display.text_color.value()
+			var color = ConfigKey.Display.text_color.get_value()
 			color.a = 0.2
 			canvas.draw_line( Vector2(0, y), Vector2(document.width, y), color, 1)
 			return
