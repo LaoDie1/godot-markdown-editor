@@ -37,7 +37,7 @@ var current_file : String:
 #============================================================
 func _ready():
 	menu.init_menu({
-		"File": ["New", "Open", "Scan Files", "Save",],
+		"File": ["New", "Open", "Scan Files", "Save", "-", "Show File in File Manager"],
 		"Operate": ["Show Debug", "Print", ],
 	})
 	menu.init_shortcut({
@@ -124,6 +124,11 @@ func _on_menu_menu_pressed(idx, menu_path):
 				save_file_dialog.popup_centered_ratio()
 			else:
 				save_file(current_file)
+		
+		"/File/Show File in File Manager":
+			var file = file_tree.get_selected_file()
+			if file:
+				FileUtil.shell_open(file)
 		
 		"/Operate/Print":
 			var text = markdown_edit.get_text()

@@ -24,13 +24,21 @@ signal height_changed(height: int)
 
 var document: Document ## 文档对象
 var last_clicked_item : LineItem
+var canvas_height : int = 0:
+	set(v):
+		if canvas_height != v:
+			canvas_height = v
+			height_changed.emit(canvas_height)
 
 
 #============================================================
 #  内置
 #============================================================
 func _ready():
-	resized.connect(queue_redraw)
+	resized.connect(
+		func():
+			canvas_height = size.y + 100
+	)
 
 func _draw() -> void:
 	if document:
@@ -72,16 +80,8 @@ func load_file(file_path: String) -> void:
 	last_clicked_item = null
 	document = Document.new(get_width(), file_path)
 	document.height_changed.connect(
-		func():
-			self.size.y = document.get_document_height()
-			self.height_changed.emit(document.get_document_height())
+		func(): self.size.y = document.get_document_height() + 100
 	)
-	document.height_changed.emit()
-	update_document()
+	size.y = document.get_document_height() + 100
 
-
-## 更新文档内容
-func update_document():
-	size.y = document.get_document_height()
-	queue_redraw()
 
