@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://src/scene/main.gd" id="1_5283d"]
 [ext_resource type="Script" path="res://addons/simplemenu/simple_menu.gd" id="1_s2vjw"]
-[ext_resource type="PackedScene" uid="uid://cnagm0ae3yv72" path="res://src/scene/editor/markdown_edit.tscn" id="3_dylv3"]
+[ext_resource type="PackedScene" uid="uid://cnagm0ae3yv72" path="res://src/scene/document/markdown_edit.tscn" id="3_dylv3"]
 [ext_resource type="Script" path="res://src/scene/file_tree.gd" id="3_k2uik"]
 [ext_resource type="PackedScene" uid="uid://cvq1itqxgbryv" path="res://src/scene/prompt/prompt.tscn" id="4_ef3uh"]
 

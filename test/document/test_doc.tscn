@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://test/document/test_doc.gd" id="1_677vc"]
 [ext_resource type="Script" path="res://src/scene/document/document_canvas.gd" id="2_c7ljp"]
-[ext_resource type="Script" path="res://src/scene/editor/debug_edit.gd" id="3_ued63"]
+[ext_resource type="Script" path="res://src/scene/document/debug_edit.gd" id="3_ued63"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wbxhs"]
 bg_color = Color(0.921875, 0.921875, 0.921875, 1)

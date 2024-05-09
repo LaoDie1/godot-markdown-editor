@@ -27,7 +27,7 @@ class BlockRegex:
 	func _init() -> void:
 		regex.compile(
 			"(?<IMAGE>!\\[(.*?)\\]\\((.*?)\\))"   # 图片
-			+ "|(?<LINK>\\[(.*?)\\]\\((.*?)\\))" # 链接
+			+ "|(?<LINK>\\[(.*?)\\]\\((.*?)\\))"  # 链接
 			+ "|(?<LINK>\\<(.*?)\\>)"
 			#+ "|(?<BOLD>(\\*{1,})(.*?)(\\*{1,}))"
 		)
@@ -48,7 +48,7 @@ static func handle_block(text: String) -> Array:
 		} ) 
 		
 		var type : int = Type.get( result.names.keys()[0], 0)
-		var data = {
+		var data : Dictionary = {
 			"type": type,
 			"text": result.get_string(),
 		}

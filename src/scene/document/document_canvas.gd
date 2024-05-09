@@ -6,12 +6,12 @@
 # - version: 4.3.0.dev5
 #============================================================
 ## 文档的画布对象
+##
+##只处理关于绘制的内容，不涉及行、块、文本的内容
 class_name DocumentCanvas
 extends Control
 
 
-## 点击文档中的行
-signal clicked_line(line: LineItem)
 signal height_changed(height: int)
 
 
@@ -23,7 +23,6 @@ signal height_changed(height: int)
 
 
 var document: Document ## 文档对象
-var last_clicked_item : LineItem
 var canvas_height : int = 0:
 	set(v):
 		if canvas_height != v:
@@ -44,16 +43,6 @@ func _draw() -> void:
 	if document:
 		document.width = size.x
 		document.draw(self, vertical_offset, get_height())
-
-func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			if document:
-				var line : LineItem = document.get_line_by_point(get_local_mouse_position())
-				# 防止重复点击选中
-				if line and line != last_clicked_item:
-					last_clicked_item = line
-					clicked_line.emit(line)
 
 
 #============================================================
@@ -77,7 +66,6 @@ func load_file(file_path: String) -> void:
 		await Engine.get_main_loop().process_frame
 	
 	# 文档对象
-	last_clicked_item = null
 	document = Document.new(get_width(), file_path)
 	document.height_changed.connect(
 		func(): self.size.y = document.get_document_height() + 100

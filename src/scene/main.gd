@@ -67,7 +67,7 @@ func _ready():
 
 
 func _exit_tree():
-	ConfigKey.Path.opened_files.update(
+	ConfigKey.Path.opened_files.set_value(
 		DataUtil.array_to_dictionary(file_tree.get_files())
 	)
 
@@ -89,7 +89,7 @@ func add_file_items(files: Array, force: bool = false):
 
 func open_file(path: String):
 	current_file = path
-	ConfigKey.Path.current_dir.update(path.get_base_dir())
+	ConfigKey.Path.current_dir.set_value(path.get_base_dir())
 	if add_file_item(path):
 		file_tree.select_file(path)
 
@@ -145,21 +145,22 @@ func _on_menu_menu_check_toggled(idx, menu_path, status):
 
 
 func _on_scan_files_dialog_dir_selected(dir: String) -> void:
-	var files = FileUtil.scan_file(dir, true).filter(
-		func(file: String): return file.get_extension().to_lower() in ["", "txt", "md"]
+	var files : Array = FileUtil.scan_file(dir, true).filter(
+		func(file: String): 
+			return file.get_extension().to_lower() in ["txt", "md", "", ]
 	)
 	add_file_items(files)
-	ConfigKey.Dialog.scan_dir.update(dir)
+	ConfigKey.Dialog.scan_dir.set_value(dir)
 
 
 func _on_open_file_dialog_file_selected(path: String):
 	open_file(path)
-	ConfigKey.Dialog.open_dir.update(path.get_base_dir())
+	ConfigKey.Dialog.open_dir.set_value(path.get_base_dir())
 
 
 func _on_save_file_dialog_file_selected(path: String):
 	save_file(path)
-	ConfigKey.Dialog.save_dir.update(path.get_base_dir())
+	ConfigKey.Dialog.save_dir.set_value(path.get_base_dir())
 
 func _on_file_item_tree_item_selected():
 	var item : TreeItem = file_tree.get_selected()

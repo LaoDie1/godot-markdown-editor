@@ -11,14 +11,13 @@ class_name TestDocuemnt
 extends EditorScript
 
 
-const file_path = r"C:\Users\z\Desktop\test.md"
+const file_path = r"C:\Users\z\Desktop\test1.md"
 static var document : Document
 
 
 func _run() -> void:
 	var canvas = EditorUtil.get_edited_scene_root() as Control
-	document = Document.new(file_path)
-	document.update_doc_height(canvas.size.x)
+	document = Document.new(canvas.size.x, file_path)
 	print(document.get_doc_height())
 	
 	#canvas.call_draw(DrawObject.new(canvas).draw)

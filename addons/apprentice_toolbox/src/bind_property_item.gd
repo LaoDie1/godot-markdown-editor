@@ -56,7 +56,7 @@ func bind_method(method: Callable, update: bool = false):
 
 ## 绑定信号到当前属性。这个信号需要有一个参数，接收改变的值
 func bind_signal(_signal: Signal) -> BindPropertyItem:
-	_signal.connect(update)
+	_signal.connect(set_value)
 	return self
 
 ## 断开绑定属性
@@ -66,8 +66,8 @@ func unbind_property(object: Object, property: String):
 			_method_list.erase(method)
 			break
 
-## 更新属性
-func update(value) -> void:
+## 设置属性
+func set_value(value):
 	if not equals_value(value):
 		# 设置属性
 		for method:Callable in _method_list:

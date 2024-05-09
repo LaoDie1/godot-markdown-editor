@@ -7,9 +7,13 @@
 #============================================================
 ## Markdown 编辑界面
 ##
-## 文本 UI 界面整合管理
+## Markdown 文本 UI 界面整合管理。操作行为的处理。
 class_name MarkdownEdit
 extends Control
+
+
+## 点击文档中的行
+signal clicked_line(line: LineItem)
 
 
 ## 绘制的文件路径（设置完自动打开文件）
@@ -38,6 +42,7 @@ extends Control
 
 
 var _selected_line_item: LineItem
+var _last_clicked_item : LineItem
 
 
 #============================================================
@@ -62,7 +67,6 @@ func _ready() -> void:
 	text_edit.visible = false
 	debug.visible = show_debug
 	line_spacing_spin_box.value = ConfigKey.Display.line_spacing.get_value()
-	
 
 
 func _process(delta):
@@ -103,6 +107,7 @@ func scroll_to_line(line: LineItem):
 	elif max_y < line.offset_y + 100:
 		scroll_to(min_y + 100)
 
+
 ## 编辑行
 func edit_line(line: LineItem):
 	alter_line_from_text_edit(false)
@@ -120,12 +125,19 @@ func edit_line(line: LineItem):
 	
 	text_edit.grab_focus()
 	text_edit.clear_undo_history()
-	document_canvas.last_clicked_item = line
-
+	_last_clicked_item = line
 
 ## 修改行数据
 func alter_line(line_edit: LineItem, text: String):
-	line_edit.origin_text = text
+	# 不是代码块
+	if not text.strip_edges(true, false).begins_with("```"):
+		var last = line_edit
+		var lines = Array(text.split("\n"))
+		line_edit.origin_text = lines.pop_front()
+		for line in lines:
+			last = insert_line(last, line)
+	else:
+		line_edit.origin_text = text
 	document_canvas.queue_redraw()
 
 ## 修改到行中
@@ -160,19 +172,11 @@ func remove_line(line: LineItem):
 #============================================================
 #  连接信号
 #============================================================
-func _on_doc_canvas_gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
-		if event.pressed:
-			if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-				v_scroll_bar.value += v_scroll_bar.step
-			elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
-				v_scroll_bar.value -= v_scroll_bar.step
-
 func _on_text_edit_visibility_changed() -> void:
 	if text_edit and not text_edit.visible:
 		alter_line_from_text_edit()
-		document_canvas.last_clicked_item = null
-	
+		_last_clicked_item = null
+
 
 func _on_doc_canvas_height_changed(height) -> void:
 	v_scroll_bar.max_value = max(0, height - get_parent_control().size.y + 100)
@@ -193,6 +197,7 @@ func _on_text_edit_gui_input(event: InputEvent) -> void:
 		match event.keycode:
 			KEY_ENTER:
 				if not Input.is_key_pressed(KEY_CTRL) and _selected_line_item:
+					# 代码块回车
 					if text_edit.text.strip_edges(true, false).begins_with("```"):
 						if text_edit.get_caret_line() == 0:
 							return
@@ -203,12 +208,16 @@ func _on_text_edit_gui_input(event: InputEvent) -> void:
 								return
 					
 					Engine.get_main_loop().root.set_input_as_handled()
+					
+					var tmp = _selected_line_item
+					alter_line(tmp, tmp.origin_text)
+					
 					# 插入新的行
 					if _selected_line_item.type == LineType.UnorderedList:
 						insert_line(_selected_line_item, "- ")
 					else:
 						insert_line(_selected_line_item, "")
-			
+				
 			KEY_ESCAPE:
 				text_edit.hide()
 			
@@ -239,14 +248,28 @@ func _on_text_edit_gui_input(event: InputEvent) -> void:
 		
 
 
+func _on_document_canvas_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		if event.pressed:
+			match event.button_index:
+				MOUSE_BUTTON_WHEEL_DOWN:
+					v_scroll_bar.value += v_scroll_bar.step
+				MOUSE_BUTTON_WHEEL_UP:
+					v_scroll_bar.value -= v_scroll_bar.step
+				MOUSE_BUTTON_LEFT:
+					if document_canvas.document:
+						var line : LineItem = document_canvas.document.get_line_by_point(document_canvas.get_local_mouse_position())
+						# 防止重复点击选中 TODO，这部分操作逻辑换到 Markdown Edit 里面去
+						if line and line != _last_clicked_item:
+							_last_clicked_item = line
+							edit_line(line)
+							self.clicked_line.emit(line)
+							
+							await Engine.get_main_loop().create_timer(0.05).timeout
+							var v = text_edit.get_line_column_at_pos( text_edit.get_local_mouse_position() )
+							text_edit.set_caret_column(v.x)
+
+
 func _on_line_spacing_spin_box_value_changed(value):
 	if document_canvas.document:
-		ConfigKey.Display.line_spacing.update(value)
-
-
-func _on_document_canvas_clicked_line(line):
-	edit_line(line)
-	await Engine.get_main_loop().create_timer(0.05).timeout
-	var v = text_edit.get_line_column_at_pos( text_edit.get_local_mouse_position() )
-	text_edit.set_caret_column(v.x)
-
+		ConfigKey.Display.line_spacing.set_value(value)

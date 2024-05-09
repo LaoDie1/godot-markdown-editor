@@ -101,7 +101,7 @@ func save_file(file_path: String):
 func _on_document_canvas_selected(line_item: LineItem):
 	if debug_editor.visible:
 		var data = JsonUtil.object_to_dict(line_item)
-		data["font_height"] = line_item.get_text_height(document_canvas.get_width())
+		data["font_height"] = line_item.get_text_height()
 		data["type_string"] = LineType.find_key(line_item.type)
 		debug_editor.text = DEBUG_CONTENT.format( data ).strip_edges()
 

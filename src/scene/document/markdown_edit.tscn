@@ -1,8 +1,8 @@
 [gd_scene load_steps=6 format=3 uid="uid://cnagm0ae3yv72"]
 
-[ext_resource type="Script" path="res://src/scene/editor/markdown_edit.gd" id="1_747k5"]
+[ext_resource type="Script" path="res://src/scene/document/markdown_edit.gd" id="1_747k5"]
 [ext_resource type="Script" path="res://src/scene/document/document_canvas.gd" id="2_7vpx2"]
-[ext_resource type="Script" path="res://src/scene/editor/debug_edit.gd" id="3_qbf4f"]
+[ext_resource type="Script" path="res://src/scene/document/debug_edit.gd" id="3_qbf4f"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_a7m7v"]
 content_margin_left = 8.0
@@ -118,10 +118,9 @@ unique_name_in_owner = true
 layout_mode = 2
 suffix = "px"
 
-[connection signal="gui_input" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer" to="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" method="_gui_input"]
-[connection signal="clicked_line" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="." method="_on_document_canvas_clicked_line"]
-[connection signal="clicked_line" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="VBoxContainer/HSplitContainer/Debug" method="show_debug"]
-[connection signal="gui_input" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="." method="_on_doc_canvas_gui_input"]
+[connection signal="clicked_line" from="." to="VBoxContainer/HSplitContainer/Debug" method="show_debug"]
+[connection signal="gui_input" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer" to="." method="_on_document_canvas_gui_input"]
+[connection signal="gui_input" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="." method="_on_document_canvas_gui_input"]
 [connection signal="height_changed" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/DocumentCanvas" to="." method="_on_doc_canvas_height_changed"]
 [connection signal="gui_input" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/TextEdit" to="." method="_on_text_edit_gui_input"]
 [connection signal="visibility_changed" from="VBoxContainer/HSplitContainer/HBoxContainer/CanvasContainer/TextEdit" to="." method="_on_text_edit_visibility_changed"]

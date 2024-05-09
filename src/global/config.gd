@@ -27,14 +27,16 @@ func _init():
 		"current_dir": "",
 		"opened_files": {},
 	}
+	# 加载上次保存的数据
 	var data_file_path : String = OS.get_config_dir().path_join("Godot/MarkdownEditor/.config.data")
 	data_file = DataFile.instance(data_file_path, DataFile.BYTES, default_value)
 	data_file.set_value("line_spacing", 4)
-	# 设置配置属性
+	
+	# 设置数据到当前配置的属性
 	ScriptUtil.init_class_static_value(ConfigKey, 
 		func(script:GDScript, path, property: String):
-			var property_item = BindPropertyItem.new(property)   # 可绑定属性对象
-			property_item.update( data_file.get_value(property) ) 
+			# 绑定属性对象
+			var property_item = BindPropertyItem.new(property, data_file.get_value(property))
 			property_item.bind_method(func(value):
 				# 修改属性时更新到 data_file
 				data_file.set_value(property, value)
@@ -48,17 +50,17 @@ func _init():
 func _enter_tree() -> void:
 	if Engine.get_main_loop().current_scene is Control:
 		var font : Font = Engine.get_main_loop().current_scene.get_theme_default_font()
-		ConfigKey.Display.font.update( font )
-	# 保存数据
-	ConfigKey.Display.font_path.update("")
+		ConfigKey.Display.font.set_value( font )
+	ConfigKey.Display.font_path.set_value("")
 
 
 func _exit_tree():
+	# 保存数据
 	data_file.save()
 
 
 func add_open_file(path) -> bool:
-	var dict = ConfigKey.Path.opened_files.get_value()
+	var dict : Dictionary = ConfigKey.Path.opened_files.get_value()
 	if not dict.has(path):
 		dict[path] = null
 		return true
